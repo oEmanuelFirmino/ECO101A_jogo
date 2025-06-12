@@ -37,6 +37,7 @@
         display: block;
         background-color: #333;
         background-size: cover;
+        cursor: crosshair;
       }
 
       /* Interface do usuário (HUD) */
@@ -189,6 +190,9 @@
       /**
        * LÓGICA DO JOGO DE AVENTURA RPG - 5 FASES
        * Autor: Gemini
+       * Controles:
+       * - Movimento: Teclas W, A, S, D
+       * - Atirar: Teclas de Seta (Cima, Baixo, Esquerda, Direita)
        */
 
       const canvas = document.getElementById("gameCanvas");
@@ -198,7 +202,7 @@
 
       const assetSources = {
         player: "https://placehold.co/40x60/3498db/FFFFFF?text=Player",
-        projectile: "https://placehold.co/10x20/f1c40f/FFFFFF?text=^",
+        projectile: "https://placehold.co/10x10/f1c40f/FFFFFF?text=", // Projétil quadrado
         enemy: "https://placehold.co/40x40/e74c3c/FFFFFF?text=E",
         fastEnemy: "https://placehold.co/35x35/f39c12/FFFFFF?text=F",
         tankEnemy: "https://placehold.co/50x50/7f8c8d/FFFFFF?text=T",
@@ -286,7 +290,7 @@
           lastItemSpawnTime: 0,
           itemSpawnInterval: 10000,
           canShoot: true,
-          shootCooldown: 250,
+          shootCooldown: 300, // Aumentado um pouco
         };
       }
 
@@ -315,40 +319,77 @@
           this.shieldTimer = 0;
         }
         update() {
-          if (gameState.keysPressed["w"] || gameState.keysPressed["ArrowUp"])
-            this.y -= this.speed;
-          if (gameState.keysPressed["s"] || gameState.keysPressed["ArrowDown"])
-            this.y += this.speed;
-          if (gameState.keysPressed["a"] || gameState.keysPressed["ArrowLeft"])
-            this.x -= this.speed;
-          if (gameState.keysPressed["d"] || gameState.keysPressed["ArrowRight"])
-            this.x += this.speed;
+          // Movimento com WASD
+          if (gameState.keysPressed["w"]) this.y -= this.speed;
+          if (gameState.keysPressed["s"]) this.y += this.speed;
+          if (gameState.keysPressed["a"]) this.x -= this.speed;
+          if (gameState.keysPressed["d"]) this.x += this.speed;
 
           this.x = Math.max(0, Math.min(CANVAS_WIDTH - this.width, this.x));
           this.y = Math.max(0, Math.min(CANVAS_HEIGHT - this.height, this.y));
 
-          if (gameState.keysPressed[" "] && gameState.canShoot) this.shoot();
+          // Atirar com as Teclas de Seta
+          if (gameState.canShoot) {
+            if (gameState.keysPressed["arrowup"]) this.shoot("up");
+            else if (gameState.keysPressed["arrowdown"]) this.shoot("down");
+            else if (gameState.keysPressed["arrowleft"]) this.shoot("left");
+            else if (gameState.keysPressed["arrowright"]) this.shoot("right");
+          }
 
           if (this.isShielded) {
             this.shieldTimer -= 1000 / 60;
             if (this.shieldTimer <= 0) this.isShielded = false;
           }
         }
-        shoot() {
-          gameState.projectiles.push(
-            new Projectile(
-              this.x + this.width / 2 - 5,
-              this.y,
-              10,
-              20,
-              8,
-              images.projectile
-            )
-          );
-          gameState.canShoot = false;
-          setTimeout(() => {
-            gameState.canShoot = true;
-          }, gameState.shootCooldown);
+        shoot(direction) {
+          let projX,
+            projY,
+            vx = 0,
+            vy = 0;
+          const projSpeed = 8;
+          const projSize = 10;
+
+          switch (direction) {
+            case "up":
+              projX = this.x + this.width / 2 - projSize / 2;
+              projY = this.y - projSize;
+              vy = -projSpeed;
+              break;
+            case "down":
+              projX = this.x + this.width / 2 - projSize / 2;
+              projY = this.y + this.height;
+              vy = projSpeed;
+              break;
+            case "left":
+              projX = this.x - projSize;
+              projY = this.y + this.height / 2 - projSize / 2;
+              vx = -projSpeed;
+              break;
+            case "right":
+              projX = this.x + this.width;
+              projY = this.y + this.height / 2 - projSize / 2;
+              vx = projSpeed;
+              break;
+          }
+
+          if (vx !== 0 || vy !== 0) {
+            // Garante que uma direção foi escolhida
+            gameState.projectiles.push(
+              new Projectile(
+                projX,
+                projY,
+                projSize,
+                projSize,
+                images.projectile,
+                vx,
+                vy
+              )
+            );
+            gameState.canShoot = false;
+            setTimeout(() => {
+              gameState.canShoot = true;
+            }, gameState.shootCooldown);
+          }
         }
         takeDamage(amount) {
           if (!this.isShielded) {
@@ -415,7 +456,6 @@
           super(x, y, width, height, speed, sprite, health);
           this.maxHealth = health;
           this.direction = 1;
-          this.moveTimer = 0;
         }
         update(player) {
           this.x += this.speed * this.direction;
@@ -426,8 +466,14 @@
       }
 
       class Projectile extends Character {
+        constructor(x, y, width, height, sprite, vx, vy) {
+          super(x, y, width, height, 0, sprite);
+          this.vx = vx;
+          this.vy = vy;
+        }
         update() {
-          this.y -= this.speed;
+          this.x += this.vx;
+          this.y += this.vy;
         }
       }
 
@@ -637,7 +683,14 @@
         // Atualizar Projéteis
         gameState.projectiles.forEach((p, i) => {
           p.update();
-          if (p.y < 0) gameState.projectiles.splice(i, 1);
+          if (
+            p.y + p.height < 0 ||
+            p.y > CANVAS_HEIGHT ||
+            p.x + p.width < 0 ||
+            p.x > CANVAS_WIDTH
+          ) {
+            gameState.projectiles.splice(i, 1);
+          }
         });
 
         // Atualizar Inimigos e Colisões
