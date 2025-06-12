@@ -65,7 +65,7 @@
       }
 
       #hud p {
-        margin: 0;
+        margin: 0 5px;
       }
 
       #objective-text {
@@ -169,6 +169,7 @@
             <div id="player-health-bar" class="health-bar"></div>
           </div>
           <p>Vida: <span id="health-text">100</span></p>
+          <p>Dano: <span id="damage-text">20</span></p>
           <p>Fase: <span id="phase-text">1</span></p>
           <p>Pontos: <span id="score-text">0</span></p>
         </div>
@@ -202,7 +203,7 @@
 
       const assetSources = {
         player: "https://placehold.co/40x60/3498db/FFFFFF?text=Player",
-        projectile: "https://placehold.co/10x10/f1c40f/FFFFFF?text=", // Projétil quadrado
+        projectile: "https://placehold.co/10x10/f1c40f/FFFFFF?text=",
         enemy: "https://placehold.co/40x40/e74c3c/FFFFFF?text=E",
         fastEnemy: "https://placehold.co/35x35/f39c12/FFFFFF?text=F",
         tankEnemy: "https://placehold.co/50x50/7f8c8d/FFFFFF?text=T",
@@ -210,6 +211,7 @@
         itemHealth: "https://placehold.co/30x30/2ecc71/FFFFFF?text=H",
         itemSpeed: "https://placehold.co/30x30/9b59b6/FFFFFF?text=S",
         itemShield: "https://placehold.co/30x30/3498db/FFFFFF?text=D",
+        itemWeapon: "https://placehold.co/30x30/FFD700/000000?text=W", // Novo item de arma
         background1: "https://placehold.co/800x600/2C5D35/FFFFFF?text=Floresta",
         background2: "https://placehold.co/800x600/D2B48C/000000?text=Deserto",
         background3: "https://placehold.co/800x600/4E4E4E/FFFFFF?text=Caverna",
@@ -219,9 +221,7 @@
 
       const images = {};
 
-      // --- CONFIGURAÇÃO DAS FASES ---
       const phaseConfigs = [
-        // Fase 1
         {
           objectiveType: "survive",
           duration: 40,
@@ -231,7 +231,6 @@
           spawnInterval: 3000,
           enemyTypes: ["normal"],
         },
-        // Fase 2
         {
           objectiveType: "defeat",
           killTarget: 15,
@@ -241,7 +240,6 @@
           spawnInterval: 2500,
           enemyTypes: ["normal", "fast"],
         },
-        // Fase 3
         {
           objectiveType: "reach_portal",
           objectiveText: "Alcance o portal!",
@@ -250,7 +248,6 @@
           spawnInterval: 2800,
           enemyTypes: ["normal", "tank"],
         },
-        // Fase 4
         {
           objectiveType: "survive",
           duration: 60,
@@ -260,7 +257,6 @@
           spawnInterval: 1500,
           enemyTypes: ["fast", "tank"],
         },
-        // Fase 5
         {
           objectiveType: "defeat_boss",
           objectiveText: "Derrote o Chefe Final!",
@@ -271,7 +267,6 @@
         },
       ];
 
-      // --- ESTADO GLOBAL DO JOGO ---
       let gameState;
 
       function resetGameState() {
@@ -281,7 +276,7 @@
           items: [],
           projectiles: [],
           keysPressed: {},
-          phase: 0, // Inicia em 0 para a primeira fase
+          phase: 0,
           score: 0,
           isGameOver: false,
           phaseStartTime: 0,
@@ -290,11 +285,9 @@
           lastItemSpawnTime: 0,
           itemSpawnInterval: 10000,
           canShoot: true,
-          shootCooldown: 300, // Aumentado um pouco
+          shootCooldown: 300,
         };
       }
-
-      // --- CLASSES ---
 
       class Character {
         constructor(x, y, width, height, speed, sprite) {
@@ -315,11 +308,11 @@
           super(x, y, width, height, speed, sprite);
           this.maxHealth = 100;
           this.health = this.maxHealth;
+          this.projectileDamage = 20; // Dano inicial
           this.isShielded = false;
           this.shieldTimer = 0;
         }
         update() {
-          // Movimento com WASD
           if (gameState.keysPressed["w"]) this.y -= this.speed;
           if (gameState.keysPressed["s"]) this.y += this.speed;
           if (gameState.keysPressed["a"]) this.x -= this.speed;
@@ -328,7 +321,6 @@
           this.x = Math.max(0, Math.min(CANVAS_WIDTH - this.width, this.x));
           this.y = Math.max(0, Math.min(CANVAS_HEIGHT - this.height, this.y));
 
-          // Atirar com as Teclas de Seta
           if (gameState.canShoot) {
             if (gameState.keysPressed["arrowup"]) this.shoot("up");
             else if (gameState.keysPressed["arrowdown"]) this.shoot("down");
@@ -373,7 +365,6 @@
           }
 
           if (vx !== 0 || vy !== 0) {
-            // Garante que uma direção foi escolhida
             gameState.projectiles.push(
               new Projectile(
                 projX,
@@ -382,7 +373,8 @@
                 projSize,
                 images.projectile,
                 vx,
-                vy
+                vy,
+                this.projectileDamage
               )
             );
             gameState.canShoot = false;
@@ -411,6 +403,8 @@
           } else if (effect === "shield") {
             this.isShielded = true;
             this.shieldTimer = 5000;
+          } else if (effect === "weapon") {
+            this.projectileDamage += 15; // Aumenta o dano da arma
           }
         }
         draw(ctx) {
@@ -466,10 +460,11 @@
       }
 
       class Projectile extends Character {
-        constructor(x, y, width, height, sprite, vx, vy) {
+        constructor(x, y, width, height, sprite, vx, vy, damage) {
           super(x, y, width, height, 0, sprite);
           this.vx = vx;
           this.vy = vy;
+          this.damage = damage; // Projétil agora tem dano
         }
         update() {
           this.x += this.vx;
@@ -516,8 +511,6 @@
         }
       }
 
-      // --- FUNÇÕES DO JOGO ---
-
       function isColliding(rect1, rect2) {
         return (
           rect1.x < rect2.x + rect2.width &&
@@ -550,15 +543,16 @@
           y = Math.random() * CANVAS_HEIGHT;
         }
 
+        // Vida dos inimigos aumentada
         switch (enemyTypeKey) {
           case "fast":
             gameState.enemies.push(
-              new Enemy(x, y, 35, 35, 2.5, images.fastEnemy, 20)
+              new Enemy(x, y, 35, 35, 2.8, images.fastEnemy, 60)
             );
             break;
           case "tank":
             gameState.enemies.push(
-              new Enemy(x, y, 50, 50, 1, images.tankEnemy, 80)
+              new Enemy(x, y, 50, 50, 1.2, images.tankEnemy, 150)
             );
             break;
           case "boss":
@@ -570,13 +564,13 @@
                 100,
                 2,
                 images.bossEnemy,
-                1000
+                2500
               )
             );
             break;
           default:
             gameState.enemies.push(
-              new Enemy(x, y, 40, 40, 1.5, images.enemy, 40)
+              new Enemy(x, y, 40, 40, 1.8, images.enemy, 80)
             );
             break;
         }
@@ -593,6 +587,14 @@
         const { sprite, effect } =
           types[Math.floor(Math.random() * types.length)];
         gameState.items.push(new Item(x, y, 30, 30, sprite, effect));
+      }
+
+      function spawnWeaponUpgrade() {
+        const x = Math.random() * (CANVAS_WIDTH - 100) + 50;
+        const y = Math.random() * (CANVAS_HEIGHT - 100) + 50;
+        gameState.items.push(
+          new Item(x, y, 30, 30, images.itemWeapon, "weapon")
+        );
       }
 
       function setupPhase(phaseIndex) {
@@ -612,6 +614,8 @@
         document.getElementById(
           "objective-text"
         ).textContent = `Objetivo: ${config.objectiveText}`;
+
+        spawnWeaponUpgrade(); // Garante um upgrade de arma por fase
 
         if (config.objectiveType === "reach_portal") {
           gameState.portal = new Portal(
@@ -652,7 +656,7 @@
             setupPhase(gameState.phase + 1);
           } else {
             gameState.isGameOver = true;
-            showEndScreen(true); // Venceu o jogo
+            showEndScreen(true);
           }
         }
       }
@@ -663,7 +667,6 @@
         const now = Date.now();
         gameState.player.update();
 
-        // Spawn de Inimigos e Itens
         const config = phaseConfigs[gameState.phase];
         if (
           now - gameState.lastEnemySpawnTime > config.spawnInterval &&
@@ -674,13 +677,13 @@
         }
         if (
           now - gameState.lastItemSpawnTime > gameState.itemSpawnInterval &&
-          gameState.items.length < 3
+          gameState.items.length < 4
         ) {
+          // Aumentado para 4 itens
           spawnItem();
           gameState.lastItemSpawnTime = now;
         }
 
-        // Atualizar Projéteis
         gameState.projectiles.forEach((p, i) => {
           p.update();
           if (
@@ -693,18 +696,21 @@
           }
         });
 
-        // Atualizar Inimigos e Colisões
         gameState.enemies.forEach((enemy, eIndex) => {
           enemy.update(gameState.player);
 
           if (isColliding(gameState.player, enemy)) {
             gameState.player.takeDamage(20);
+            // Na colisão, remove inimigos normais mas não o chefe
+            if (!(enemy instanceof Boss)) {
+              gameState.enemies.splice(eIndex, 1);
+            }
           }
 
           gameState.projectiles.forEach((proj, pIndex) => {
             if (isColliding(proj, enemy)) {
               gameState.projectiles.splice(pIndex, 1);
-              if (enemy.takeDamage(20)) {
+              if (enemy.takeDamage(proj.damage)) {
                 gameState.enemies.splice(eIndex, 1);
                 if (config.objectiveType === "defeat") {
                   gameState.score++;
@@ -714,7 +720,6 @@
           });
         });
 
-        // Colisão com Itens
         gameState.items.forEach((item, i) => {
           if (isColliding(gameState.player, item)) {
             gameState.player.applyEffect(item.effect);
@@ -743,6 +748,8 @@
         ).style.width = `${playerHealth}%`;
         document.getElementById("health-text").textContent =
           gameState.player.health;
+        document.getElementById("damage-text").textContent =
+          gameState.player.projectileDamage;
         document.getElementById("phase-text").textContent = gameState.phase + 1;
         document.getElementById("score-text").textContent = gameState.score;
 
@@ -784,7 +791,7 @@
         } else {
           title.textContent = "Game Over";
           title.style.color = "#ff4136";
-          subtitle.textContent = "A escuridão venceu desta vez.";
+          subtitle.textContent = "A escuridão venceu esta vez.";
         }
         screen.classList.remove("hidden");
       }
@@ -831,7 +838,6 @@
           images[key].src = assetSources[key];
           images[key].onload = () => {
             loaded++;
-            // Associa as imagens de fundo às configurações da fase após o carregamento
             if (key.startsWith("background")) {
               const phaseIndex =
                 parseInt(key.replace("background", ""), 10) - 1;
