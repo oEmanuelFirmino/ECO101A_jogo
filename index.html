@@ -1,0 +1,807 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>RPG Adventure Game - 5 Fases</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=VT323&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      /* Estilização geral do corpo da página */
+      body {
+        margin: 0;
+        padding: 0;
+        background-color: #0d0d0d;
+        color: #fff;
+        font-family: "VT323", monospace;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        height: 100vh;
+        overflow: hidden; /* Impede barras de rolagem */
+      }
+
+      /* Contêiner principal do jogo */
+      #game-container {
+        position: relative;
+        border: 4px solid #4a4a4a;
+        box-shadow: 0 0 25px rgba(255, 255, 255, 0.1);
+      }
+
+      /* O canvas onde o jogo acontece */
+      canvas {
+        display: block;
+        background-color: #333;
+        background-size: cover;
+      }
+
+      /* Interface do usuário (HUD) */
+      #hud {
+        position: absolute;
+        top: 10px;
+        left: 10px;
+        right: 10px;
+        padding: 10px;
+        background-color: rgba(0, 0, 0, 0.6);
+        border-radius: 8px;
+        font-size: 20px;
+        color: #f0f0f0;
+        text-shadow: 1px 1px 2px black;
+      }
+
+      .hud-top,
+      .hud-bottom {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+      }
+      .hud-bottom {
+        margin-top: 8px;
+      }
+
+      #hud p {
+        margin: 0;
+      }
+
+      #objective-text {
+        text-align: center;
+        width: 100%;
+        color: #ffc107;
+        font-size: 22px;
+      }
+
+      /* Barra de vida */
+      .health-bar-container {
+        width: 150px;
+        height: 20px;
+        background-color: #555;
+        border: 2px solid #222;
+        border-radius: 5px;
+      }
+
+      .health-bar {
+        height: 100%;
+        background-color: #28a745; /* Verde para vida cheia */
+        border-radius: 3px;
+        transition: width 0.3s ease-in-out, background-color 0.3s ease-in-out;
+      }
+
+      /* Barra de vida do Chefe */
+      #boss-health-container {
+        position: absolute;
+        bottom: 20px;
+        left: 50%;
+        transform: translateX(-50%);
+        width: 80%;
+        height: 25px;
+        background-color: #555;
+        border: 3px solid #222;
+        border-radius: 8px;
+      }
+
+      #boss-health-bar {
+        background-color: #e74c3c;
+      }
+
+      /* Tela de mensagem (Game Over / Vitória) */
+      #message-screen {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background-color: rgba(0, 0, 0, 0.85);
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        text-align: center;
+        font-family: "Press Start 2P", cursive;
+      }
+
+      #message-screen.hidden {
+        display: none;
+      }
+
+      #message-title {
+        font-size: 48px;
+        color: #ff4136; /* Vermelho para Game Over */
+        margin-bottom: 20px;
+        text-shadow: 3px 3px 0 #000;
+      }
+
+      #message-subtitle {
+        font-size: 24px;
+        color: #f0f0f0;
+        margin-bottom: 40px;
+      }
+
+      /* Botão de reiniciar */
+      #restart-button {
+        padding: 15px 30px;
+        font-size: 20px;
+        font-family: "Press Start 2P", cursive;
+        color: #fff;
+        background-color: #0074d9;
+        border: 3px solid #fff;
+        border-radius: 10px;
+        cursor: pointer;
+        transition: background-color 0.3s, transform 0.2s;
+      }
+
+      #restart-button:hover {
+        background-color: #009eff;
+        transform: scale(1.05);
+      }
+    </style>
+  </head>
+  <body>
+    <div id="game-container">
+      <canvas id="gameCanvas" width="800" height="600"></canvas>
+      <div id="hud">
+        <div class="hud-top">
+          <div id="player-health-container" class="health-bar-container">
+            <div id="player-health-bar" class="health-bar"></div>
+          </div>
+          <p>Vida: <span id="health-text">100</span></p>
+          <p>Fase: <span id="phase-text">1</span></p>
+          <p>Pontos: <span id="score-text">0</span></p>
+        </div>
+        <div class="hud-bottom">
+          <p id="objective-text">Objetivo: Sobreviva!</p>
+        </div>
+      </div>
+      <div id="boss-health-container" class="health-bar-container hidden">
+        <div id="boss-health-bar" class="health-bar"></div>
+      </div>
+      <div id="message-screen" class="hidden">
+        <h1 id="message-title"></h1>
+        <p id="message-subtitle"></p>
+        <button id="restart-button">Reiniciar</button>
+      </div>
+    </div>
+
+    <script>
+      /**
+       * LÓGICA DO JOGO DE AVENTURA RPG - 5 FASES
+       * Autor: Gemini
+       */
+
+      const canvas = document.getElementById("gameCanvas");
+      const ctx = canvas.getContext("2d");
+      const CANVAS_WIDTH = canvas.width;
+      const CANVAS_HEIGHT = canvas.height;
+
+      const assetSources = {
+        player: "https://placehold.co/40x60/3498db/FFFFFF?text=Player",
+        projectile: "https://placehold.co/10x20/f1c40f/FFFFFF?text=^",
+        enemy: "https://placehold.co/40x40/e74c3c/FFFFFF?text=E",
+        fastEnemy: "https://placehold.co/35x35/f39c12/FFFFFF?text=F",
+        tankEnemy: "https://placehold.co/50x50/7f8c8d/FFFFFF?text=T",
+        bossEnemy: "https://placehold.co/100x100/8e44ad/FFFFFF?text=BOSS",
+        itemHealth: "https://placehold.co/30x30/2ecc71/FFFFFF?text=H",
+        itemSpeed: "https://placehold.co/30x30/9b59b6/FFFFFF?text=S",
+        itemShield: "https://placehold.co/30x30/3498db/FFFFFF?text=D",
+        background1: "https://placehold.co/800x600/2C5D35/FFFFFF?text=Floresta",
+        background2: "https://placehold.co/800x600/D2B48C/000000?text=Deserto",
+        background3: "https://placehold.co/800x600/4E4E4E/FFFFFF?text=Caverna",
+        background4: "https://placehold.co/800x600/A52A2A/FFFFFF?text=Vulcao",
+        background5: "https://placehold.co/800x600/4B0082/FFFFFF?text=Castelo",
+      };
+
+      const images = {};
+
+      // --- CONFIGURAÇÃO DAS FASES ---
+      const phaseConfigs = [
+        // Fase 1
+        {
+          objectiveType: "survive",
+          duration: 40,
+          objectiveText: "Sobreviva por 40 segundos!",
+          bg: images.background1,
+          maxEnemies: 5,
+          spawnInterval: 3000,
+          enemyTypes: ["normal"],
+        },
+        // Fase 2
+        {
+          objectiveType: "defeat",
+          killTarget: 15,
+          objectiveText: "Derrote 15 inimigos!",
+          bg: images.background2,
+          maxEnemies: 7,
+          spawnInterval: 2500,
+          enemyTypes: ["normal", "fast"],
+        },
+        // Fase 3
+        {
+          objectiveType: "reach_portal",
+          objectiveText: "Alcance o portal!",
+          bg: images.background3,
+          maxEnemies: 8,
+          spawnInterval: 2800,
+          enemyTypes: ["normal", "tank"],
+        },
+        // Fase 4
+        {
+          objectiveType: "survive",
+          duration: 60,
+          objectiveText: "Sobreviva por 60 segundos!",
+          bg: images.background4,
+          maxEnemies: 12,
+          spawnInterval: 1500,
+          enemyTypes: ["fast", "tank"],
+        },
+        // Fase 5
+        {
+          objectiveType: "defeat_boss",
+          objectiveText: "Derrote o Chefe Final!",
+          bg: images.background5,
+          maxEnemies: 1,
+          spawnInterval: 99999,
+          enemyTypes: ["boss"],
+        },
+      ];
+
+      // --- ESTADO GLOBAL DO JOGO ---
+      let gameState;
+
+      function resetGameState() {
+        gameState = {
+          player: null,
+          enemies: [],
+          items: [],
+          projectiles: [],
+          keysPressed: {},
+          phase: 0, // Inicia em 0 para a primeira fase
+          score: 0,
+          isGameOver: false,
+          phaseStartTime: 0,
+          portal: null,
+          lastEnemySpawnTime: 0,
+          lastItemSpawnTime: 0,
+          itemSpawnInterval: 10000,
+          canShoot: true,
+          shootCooldown: 250,
+        };
+      }
+
+      // --- CLASSES ---
+
+      class Character {
+        constructor(x, y, width, height, speed, sprite) {
+          this.x = x;
+          this.y = y;
+          this.width = width;
+          this.height = height;
+          this.speed = speed;
+          this.sprite = sprite;
+        }
+        draw(ctx) {
+          ctx.drawImage(this.sprite, this.x, this.y, this.width, this.height);
+        }
+      }
+
+      class Player extends Character {
+        constructor(x, y, width, height, speed, sprite) {
+          super(x, y, width, height, speed, sprite);
+          this.maxHealth = 100;
+          this.health = this.maxHealth;
+          this.isShielded = false;
+          this.shieldTimer = 0;
+        }
+        update() {
+          if (gameState.keysPressed["w"] || gameState.keysPressed["ArrowUp"])
+            this.y -= this.speed;
+          if (gameState.keysPressed["s"] || gameState.keysPressed["ArrowDown"])
+            this.y += this.speed;
+          if (gameState.keysPressed["a"] || gameState.keysPressed["ArrowLeft"])
+            this.x -= this.speed;
+          if (gameState.keysPressed["d"] || gameState.keysPressed["ArrowRight"])
+            this.x += this.speed;
+
+          this.x = Math.max(0, Math.min(CANVAS_WIDTH - this.width, this.x));
+          this.y = Math.max(0, Math.min(CANVAS_HEIGHT - this.height, this.y));
+
+          if (gameState.keysPressed[" "] && gameState.canShoot) this.shoot();
+
+          if (this.isShielded) {
+            this.shieldTimer -= 1000 / 60;
+            if (this.shieldTimer <= 0) this.isShielded = false;
+          }
+        }
+        shoot() {
+          gameState.projectiles.push(
+            new Projectile(
+              this.x + this.width / 2 - 5,
+              this.y,
+              10,
+              20,
+              8,
+              images.projectile
+            )
+          );
+          gameState.canShoot = false;
+          setTimeout(() => {
+            gameState.canShoot = true;
+          }, gameState.shootCooldown);
+        }
+        takeDamage(amount) {
+          if (!this.isShielded) {
+            this.health -= amount;
+            if (this.health <= 0) {
+              this.health = 0;
+              gameState.isGameOver = true;
+            }
+          }
+        }
+        applyEffect(effect) {
+          if (effect === "heal")
+            this.health = Math.min(this.maxHealth, this.health + 25);
+          else if (effect === "speed") {
+            this.speed *= 1.5;
+            setTimeout(() => {
+              this.speed /= 1.5;
+            }, 5000);
+          } else if (effect === "shield") {
+            this.isShielded = true;
+            this.shieldTimer = 5000;
+          }
+        }
+        draw(ctx) {
+          super.draw(ctx);
+          if (this.isShielded) {
+            ctx.beginPath();
+            ctx.arc(
+              this.x + this.width / 2,
+              this.y + this.height / 2,
+              Math.max(this.width, this.height) / 2 + 5,
+              0,
+              Math.PI * 2
+            );
+            ctx.strokeStyle = "rgba(52, 152, 219, 0.8)";
+            ctx.lineWidth = 4;
+            ctx.stroke();
+          }
+        }
+      }
+
+      class Enemy extends Character {
+        constructor(x, y, width, height, speed, sprite, health) {
+          super(x, y, width, height, speed, sprite);
+          this.health = health;
+        }
+        update(player) {
+          const dx = player.x - this.x;
+          const dy = player.y - this.y;
+          const distance = Math.sqrt(dx * dx + dy * dy);
+          if (distance > 1) {
+            this.x += (dx / distance) * this.speed;
+            this.y += (dy / distance) * this.speed;
+          }
+        }
+        takeDamage(amount) {
+          this.health -= amount;
+          return this.health <= 0;
+        }
+      }
+
+      class Boss extends Enemy {
+        constructor(x, y, width, height, speed, sprite, health) {
+          super(x, y, width, height, speed, sprite, health);
+          this.maxHealth = health;
+          this.direction = 1;
+          this.moveTimer = 0;
+        }
+        update(player) {
+          this.x += this.speed * this.direction;
+          if (this.x <= 0 || this.x >= CANVAS_WIDTH - this.width) {
+            this.direction *= -1;
+          }
+        }
+      }
+
+      class Projectile extends Character {
+        update() {
+          this.y -= this.speed;
+        }
+      }
+
+      class Item extends Character {
+        constructor(x, y, width, height, sprite, effect) {
+          super(x, y, width, height, 0, sprite);
+          this.effect = effect;
+        }
+      }
+
+      class Portal extends Character {
+        constructor(x, y, radius, sprite) {
+          super(x, y, radius * 2, radius * 2, 0, sprite);
+          this.radius = radius;
+          this.angle = 0;
+        }
+        update() {
+          this.angle += 0.02;
+        }
+        draw(ctx) {
+          ctx.save();
+          ctx.translate(this.x + this.radius, this.y + this.radius);
+          ctx.rotate(this.angle);
+          const gradient = ctx.createRadialGradient(
+            0,
+            0,
+            this.radius / 3,
+            0,
+            0,
+            this.radius
+          );
+          gradient.addColorStop(0, "rgba(142, 68, 173, 0.2)");
+          gradient.addColorStop(0.5, "rgba(155, 89, 182, 0.8)");
+          gradient.addColorStop(1, "rgba(142, 68, 173, 0.2)");
+          ctx.fillStyle = gradient;
+          ctx.beginPath();
+          ctx.arc(0, 0, this.radius, 0, Math.PI * 2);
+          ctx.fill();
+          ctx.restore();
+        }
+      }
+
+      // --- FUNÇÕES DO JOGO ---
+
+      function isColliding(rect1, rect2) {
+        return (
+          rect1.x < rect2.x + rect2.width &&
+          rect1.x + rect1.width > rect2.x &&
+          rect1.y < rect2.y + rect2.height &&
+          rect1.y + rect1.height > rect2.y
+        );
+      }
+
+      function spawnEnemy() {
+        const config = phaseConfigs[gameState.phase];
+        const enemyTypeKey =
+          config.enemyTypes[
+            Math.floor(Math.random() * config.enemyTypes.length)
+          ];
+
+        let x, y;
+        const side = Math.floor(Math.random() * 4);
+        if (side === 0) {
+          x = Math.random() * CANVAS_WIDTH;
+          y = -50;
+        } else if (side === 1) {
+          x = CANVAS_WIDTH;
+          y = Math.random() * CANVAS_HEIGHT;
+        } else if (side === 2) {
+          x = Math.random() * CANVAS_WIDTH;
+          y = CANVAS_HEIGHT;
+        } else {
+          x = -50;
+          y = Math.random() * CANVAS_HEIGHT;
+        }
+
+        switch (enemyTypeKey) {
+          case "fast":
+            gameState.enemies.push(
+              new Enemy(x, y, 35, 35, 2.5, images.fastEnemy, 20)
+            );
+            break;
+          case "tank":
+            gameState.enemies.push(
+              new Enemy(x, y, 50, 50, 1, images.tankEnemy, 80)
+            );
+            break;
+          case "boss":
+            gameState.enemies.push(
+              new Boss(
+                CANVAS_WIDTH / 2 - 50,
+                50,
+                100,
+                100,
+                2,
+                images.bossEnemy,
+                1000
+              )
+            );
+            break;
+          default:
+            gameState.enemies.push(
+              new Enemy(x, y, 40, 40, 1.5, images.enemy, 40)
+            );
+            break;
+        }
+      }
+
+      function spawnItem() {
+        const x = Math.random() * (CANVAS_WIDTH - 60) + 30;
+        const y = Math.random() * (CANVAS_HEIGHT - 60) + 30;
+        const types = [
+          { sprite: images.itemHealth, effect: "heal" },
+          { sprite: images.itemSpeed, effect: "speed" },
+          { sprite: images.itemShield, effect: "shield" },
+        ];
+        const { sprite, effect } =
+          types[Math.floor(Math.random() * types.length)];
+        gameState.items.push(new Item(x, y, 30, 30, sprite, effect));
+      }
+
+      function setupPhase(phaseIndex) {
+        gameState.phase = phaseIndex;
+        gameState.enemies = [];
+        gameState.items = [];
+        gameState.projectiles = [];
+        gameState.phaseStartTime = Date.now();
+        gameState.lastEnemySpawnTime = 0;
+        gameState.portal = null;
+        document
+          .getElementById("boss-health-container")
+          .classList.add("hidden");
+
+        const config = phaseConfigs[phaseIndex];
+        canvas.style.backgroundImage = `url('${config.bg.src}')`;
+        document.getElementById(
+          "objective-text"
+        ).textContent = `Objetivo: ${config.objectiveText}`;
+
+        if (config.objectiveType === "reach_portal") {
+          gameState.portal = new Portal(
+            CANVAS_WIDTH - 80,
+            CANVAS_HEIGHT / 2 - 40,
+            40
+          );
+        }
+        if (config.objectiveType === "defeat_boss") {
+          spawnEnemy();
+          document
+            .getElementById("boss-health-container")
+            .classList.remove("hidden");
+        }
+      }
+
+      function checkPhaseCompletion() {
+        const config = phaseConfigs[gameState.phase];
+        let completed = false;
+
+        if (config.objectiveType === "survive") {
+          const timeElapsed = (Date.now() - gameState.phaseStartTime) / 1000;
+          if (timeElapsed >= config.duration) completed = true;
+        } else if (config.objectiveType === "defeat") {
+          if (gameState.score >= config.killTarget) completed = true;
+        } else if (config.objectiveType === "reach_portal") {
+          if (
+            gameState.portal &&
+            isColliding(gameState.player, gameState.portal)
+          )
+            completed = true;
+        } else if (config.objectiveType === "defeat_boss") {
+          if (gameState.enemies.length === 0) completed = true;
+        }
+
+        if (completed) {
+          if (gameState.phase + 1 < phaseConfigs.length) {
+            setupPhase(gameState.phase + 1);
+          } else {
+            gameState.isGameOver = true;
+            showEndScreen(true); // Venceu o jogo
+          }
+        }
+      }
+
+      function update() {
+        if (gameState.isGameOver) return;
+
+        const now = Date.now();
+        gameState.player.update();
+
+        // Spawn de Inimigos e Itens
+        const config = phaseConfigs[gameState.phase];
+        if (
+          now - gameState.lastEnemySpawnTime > config.spawnInterval &&
+          gameState.enemies.length < config.maxEnemies
+        ) {
+          spawnEnemy();
+          gameState.lastEnemySpawnTime = now;
+        }
+        if (
+          now - gameState.lastItemSpawnTime > gameState.itemSpawnInterval &&
+          gameState.items.length < 3
+        ) {
+          spawnItem();
+          gameState.lastItemSpawnTime = now;
+        }
+
+        // Atualizar Projéteis
+        gameState.projectiles.forEach((p, i) => {
+          p.update();
+          if (p.y < 0) gameState.projectiles.splice(i, 1);
+        });
+
+        // Atualizar Inimigos e Colisões
+        gameState.enemies.forEach((enemy, eIndex) => {
+          enemy.update(gameState.player);
+
+          if (isColliding(gameState.player, enemy)) {
+            gameState.player.takeDamage(20);
+          }
+
+          gameState.projectiles.forEach((proj, pIndex) => {
+            if (isColliding(proj, enemy)) {
+              gameState.projectiles.splice(pIndex, 1);
+              if (enemy.takeDamage(20)) {
+                gameState.enemies.splice(eIndex, 1);
+                if (config.objectiveType === "defeat") {
+                  gameState.score++;
+                }
+              }
+            }
+          });
+        });
+
+        // Colisão com Itens
+        gameState.items.forEach((item, i) => {
+          if (isColliding(gameState.player, item)) {
+            gameState.player.applyEffect(item.effect);
+            gameState.items.splice(i, 1);
+          }
+        });
+
+        if (gameState.portal) gameState.portal.update();
+        checkPhaseCompletion();
+      }
+
+      function draw() {
+        ctx.clearRect(0, 0, CANVAS_WIDTH, CANVAS_HEIGHT);
+        if (gameState.portal) gameState.portal.draw(ctx);
+        gameState.player.draw(ctx);
+        gameState.items.forEach((item) => item.draw(ctx));
+        gameState.enemies.forEach((enemy) => enemy.draw(ctx));
+        gameState.projectiles.forEach((p) => p.draw(ctx));
+      }
+
+      function drawHUD() {
+        const playerHealth =
+          (gameState.player.health / gameState.player.maxHealth) * 100;
+        document.getElementById(
+          "player-health-bar"
+        ).style.width = `${playerHealth}%`;
+        document.getElementById("health-text").textContent =
+          gameState.player.health;
+        document.getElementById("phase-text").textContent = gameState.phase + 1;
+        document.getElementById("score-text").textContent = gameState.score;
+
+        const config = phaseConfigs[gameState.phase];
+        if (config.objectiveType === "survive") {
+          const timeElapsed = (Date.now() - gameState.phaseStartTime) / 1000;
+          const timeLeft = Math.max(
+            0,
+            Math.ceil(config.duration - timeElapsed)
+          );
+          document.getElementById(
+            "objective-text"
+          ).textContent = `Sobreviva! ${timeLeft}s`;
+        } else if (config.objectiveType === "defeat") {
+          document.getElementById(
+            "objective-text"
+          ).textContent = `Derrote ${config.killTarget} inimigos (${gameState.score}/${config.killTarget})`;
+        }
+
+        if (config.objectiveType === "defeat_boss" && gameState.enemies[0]) {
+          const bossHealth =
+            (gameState.enemies[0].health / gameState.enemies[0].maxHealth) *
+            100;
+          document.getElementById(
+            "boss-health-bar"
+          ).style.width = `${bossHealth}%`;
+        }
+      }
+
+      function showEndScreen(didWin) {
+        const screen = document.getElementById("message-screen");
+        const title = document.getElementById("message-title");
+        const subtitle = document.getElementById("message-subtitle");
+
+        if (didWin) {
+          title.textContent = "Você Zerou!";
+          title.style.color = "#2ecc71";
+          subtitle.textContent = "A bravura prevaleceu!";
+        } else {
+          title.textContent = "Game Over";
+          title.style.color = "#ff4136";
+          subtitle.textContent = "A escuridão venceu desta vez.";
+        }
+        screen.classList.remove("hidden");
+      }
+
+      function gameLoop(timestamp) {
+        if (gameState.isGameOver) {
+          if (
+            document
+              .getElementById("message-screen")
+              .classList.contains("hidden")
+          ) {
+            showEndScreen(false);
+          }
+          return;
+        }
+
+        update(timestamp);
+        draw();
+        drawHUD();
+
+        requestAnimationFrame(gameLoop);
+      }
+
+      function init() {
+        resetGameState();
+        document.getElementById("message-screen").classList.add("hidden");
+        gameState.player = new Player(
+          CANVAS_WIDTH / 2 - 20,
+          CANVAS_HEIGHT - 80,
+          40,
+          60,
+          4,
+          images.player
+        );
+        setupPhase(0);
+        gameLoop();
+      }
+
+      function loadAssets() {
+        let loaded = 0;
+        const total = Object.keys(assetSources).length;
+        for (let key in assetSources) {
+          images[key] = new Image();
+          images[key].src = assetSources[key];
+          images[key].onload = () => {
+            loaded++;
+            // Associa as imagens de fundo às configurações da fase após o carregamento
+            if (key.startsWith("background")) {
+              const phaseIndex =
+                parseInt(key.replace("background", ""), 10) - 1;
+              if (phaseConfigs[phaseIndex]) {
+                phaseConfigs[phaseIndex].bg = images[key];
+              }
+            }
+            if (loaded === total) {
+              init();
+            }
+          };
+        }
+      }
+
+      window.addEventListener("keydown", (e) => {
+        gameState.keysPressed[e.key.toLowerCase()] = true;
+      });
+      window.addEventListener("keyup", (e) => {
+        gameState.keysPressed[e.key.toLowerCase()] = false;
+      });
+      document.getElementById("restart-button").addEventListener("click", init);
+
+      loadAssets();
+    </script>
+  </body>
+</html>
