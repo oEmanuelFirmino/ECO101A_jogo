@@ -3,7 +3,7 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>RPG Adventure Game - 5 Fases</title>
+    <title>RPG Adventure Game - 5 Fases (Mapa Expandido)</title>
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link
@@ -25,11 +25,17 @@
         overflow: hidden; /* Impede barras de rolagem */
       }
 
-      /* Contêiner principal do jogo */
-      #game-container {
-        position: relative;
+      /* NOVO: Contêiner principal para agrupar HUD e Jogo */
+      #main-wrapper {
         border: 4px solid #4a4a4a;
         box-shadow: 0 0 25px rgba(255, 255, 255, 0.1);
+        background-color: rgba(0, 0, 0, 0.6);
+        border-radius: 8px;
+      }
+
+      /* Contêiner do jogo (Canvas e Overlays) */
+      #game-container {
+        position: relative;
       }
 
       /* O canvas onde o jogo acontece */
@@ -40,18 +46,13 @@
         cursor: crosshair;
       }
 
-      /* Interface do usuário (HUD) */
+      /* Interface do usuário (HUD) - MODIFICADO */
       #hud {
-        position: absolute;
-        top: 10px;
-        left: 10px;
-        right: 10px;
         padding: 10px;
-        background-color: rgba(0, 0, 0, 0.6);
-        border-radius: 8px;
         font-size: 20px;
         color: #f0f0f0;
         text-shadow: 1px 1px 2px black;
+        border-bottom: 2px solid #4a4a4a; /* Linha para separar do jogo */
       }
 
       .hud-top,
@@ -65,7 +66,7 @@
       }
 
       #hud p {
-        margin: 0 5px;
+        margin: 0;
       }
 
       #objective-text {
@@ -91,7 +92,7 @@
         transition: width 0.3s ease-in-out, background-color 0.3s ease-in-out;
       }
 
-      /* Barra de vida do Chefe */
+      /* Barra de vida do Chefe (permanece absoluta ao container do jogo) */
       #boss-health-container {
         position: absolute;
         bottom: 20px;
@@ -161,15 +162,13 @@
     </style>
   </head>
   <body>
-    <div id="game-container">
-      <canvas id="gameCanvas" width="800" height="600"></canvas>
+    <div id="main-wrapper">
       <div id="hud">
         <div class="hud-top">
           <div id="player-health-container" class="health-bar-container">
             <div id="player-health-bar" class="health-bar"></div>
           </div>
           <p>Vida: <span id="health-text">100</span></p>
-          <p>Dano: <span id="damage-text">20</span></p>
           <p>Fase: <span id="phase-text">1</span></p>
           <p>Pontos: <span id="score-text">0</span></p>
         </div>
@@ -177,13 +176,16 @@
           <p id="objective-text">Objetivo: Sobreviva!</p>
         </div>
       </div>
-      <div id="boss-health-container" class="health-bar-container hidden">
-        <div id="boss-health-bar" class="health-bar"></div>
-      </div>
-      <div id="message-screen" class="hidden">
-        <h1 id="message-title"></h1>
-        <p id="message-subtitle"></p>
-        <button id="restart-button">Reiniciar</button>
+      <div id="game-container">
+        <canvas id="gameCanvas" width="800" height="600"></canvas>
+        <div id="boss-health-container" class="health-bar-container hidden">
+          <div id="boss-health-bar" class="health-bar"></div>
+        </div>
+        <div id="message-screen" class="hidden">
+          <h1 id="message-title"></h1>
+          <p id="message-subtitle"></p>
+          <button id="restart-button">Reiniciar</button>
+        </div>
       </div>
     </div>
 
@@ -198,75 +200,49 @@
 
       const canvas = document.getElementById("gameCanvas");
       const ctx = canvas.getContext("2d");
-      const CANVAS_WIDTH = canvas.width;
-      const CANVAS_HEIGHT = canvas.height;
+
+      // --- NOVAS CONSTANTES DE DIMENSÃO ---
+      const VIEWPORT_WIDTH = canvas.width; // 800 (Área visível)
+      const VIEWPORT_HEIGHT = canvas.height; // 600 (Área visível)
+      const MAP_WIDTH = 1000; // Tamanho total do mapa
+      const MAP_HEIGHT = 1000; // Tamanho total do mapa
+      const PLAYABLE_AREA_BORDER = 100; // 1000 - 800 = 200 / 2 = 100px de borda
 
       const assetSources = {
-        player: "https://placehold.co/40x60/3498db/FFFFFF?text=Player",
+         golem_frente: "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 50 50'%3E%3Cpath d='M8 15 L42 15 L45 25 L45 45 L5 45 L5 25 Z' fill='%236c757d'/%3E%3Cpath d='M10 17 L40 17 L42 25 L42 43 L8 43 L8 25 Z' fill='%23adb5bd'/%3E%3Crect x='18' y='12' width='14' height='8' fill='%23495057'/%3E%3Crect x='21' y='14' width='3' height='3' fill='%23ffc107'/%3E%3Crect x='26' y='14' width='3' height='3' fill='%23ffc107'/%3E%3Cpath d='M-5 20 L8 20 L8 35 L-5 35 Q-8 27 -5 20 Z' fill='%236c757d'/%3E%3Cpath d='M55 20 L42 20 L42 35 L55 35 Q58 27 55 20 Z' fill='%236c757d'/%3E%3C/svg%3E",
+        golem_costas: "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 50 50'%3E%3Cpath d='M8 15 L42 15 L45 25 L45 45 L5 45 L5 25 Z' fill='%236c757d'/%3E%3Cpath d='M10 17 L40 17 L42 25 L42 43 L8 43 L8 25 Z' fill='%23adb5bd'/%3E%3Cpath d='M-5 20 L8 20 L8 35 L-5 35 Q-8 27 -5 20 Z' fill='%236c757d'/%3E%3Cpath d='M55 20 L42 20 L42 35 L55 35 Q58 27 55 20 Z' fill='%236c757d'/%3E%3Cpath d='M15 17 L22 10 L28 10 L35 17 Z' fill='%235a6168'/%3E%3C/svg%3E",
+        golem_direita: "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 50 50'%3E%3Cpath d='M5 15 L40 15 L40 45 L5 45 Z' fill='%236c757d'/%3E%3Cpath d='M7 17 L38 17 L38 43 L7 43 Z' fill='%23adb5bd'/%3E%3Cpath d='M35 20 L50 20 Q55 30 50 40 L35 40 Z' fill='%236c757d'/%3E%3Cpath d='M37 22 L48 22 Q52 30 48 38 L37 38 Z' fill='%235a6168'/%3E%3Crect x='30' y='12' width='8' height='8' fill='%23495057'/%3E%3C/svg%3E",
+        golem_esquerda: "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 50 50'%3E%3Cpath d='M10 15 L45 15 L45 45 L10 45 Z' fill='%236c757d'/%3E%3Cpath d='M12 17 L43 17 L43 43 L12 43 Z' fill='%23adb5bd'/%3E%3Cpath d='M15 20 L0 20 Q-5 30 0 40 L15 40 Z' fill='%236c757d'/%3E%3Cpath d='M13 22 L2 22 Q-2 30 2 38 L13 38 Z' fill='%235a6168'/%3E%3Crect x='12' y='12' width='8' height='8' fill='%23495057'/%3E%3C/svg%3E",
+        player_frente: "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 40 60'%3E%3Crect x='10' y='20' width='20' height='30' fill='%233498db'/%3E%3Crect x='12' y='50' width='6' height='10' fill='%232c3e50'/%3E%3Crect x='22' y='50' width='6' height='10' fill='%232c3e50'/%3E%3Crect x='15' y='10' width='10' height='10' fill='%23f1c40f'/%3E%3C/svg%3E",
+        player_costas: "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 40 60'%3E%3Crect x='10' y='20' width='20' height='30' fill='%233498db'/%3E%3Crect x='12' y='50' width='6' height='10' fill='%232c3e50'/%3E%3Crect x='22' y='50' width='6' height='10' fill='%232c3e50'/%3E%3Crect x='15' y='10' width='10' height='10' fill='%23f1c40f'/%3E%3Crect x='10' y='10' width='20' height='15' fill='%233498db'/%3E%3C/svg%3E",
+        player_direita: "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 40 60'%3E%3Crect x='10' y='20' width='20' height='30' fill='%233498db'/%3E%3Crect x='13' y='50' width='14' height='10' fill='%232c3e50'/%3E%3Crect x='15' y='10' width='10' height='10' fill='%23f1c40f'/%3E%3Crect x='25' y='25' width='10' height='6' fill='%232980b9'/%3E%3C/svg%3E",
+        player_esquerda: "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 40 60'%3E%3Crect x='10' y='20' width='20' height='30' fill='%233498db'/%3E%3Crect x='13' y='50' width='14' height='10' fill='%232c3e50'/%3E%3Crect x='15' y='10' width='10' height='10' fill='%23f1c40f'/%3E%3Crect x='5' y='25' width='10' height='6' fill='%232980b9'/%3E%3C/svg%3E",
         projectile: "https://placehold.co/10x10/f1c40f/FFFFFF?text=",
         enemy: "https://placehold.co/40x40/e74c3c/FFFFFF?text=E",
-        fastEnemy: "https://placehold.co/35x35/f39c12/FFFFFF?text=F",
+        fastEnemy: "images/pixel_art.png",
         tankEnemy: "https://placehold.co/50x50/7f8c8d/FFFFFF?text=T",
         bossEnemy: "https://placehold.co/100x100/8e44ad/FFFFFF?text=BOSS",
-        itemHealth: "https://placehold.co/30x30/2ecc71/FFFFFF?text=H",
-        itemSpeed: "https://placehold.co/30x30/9b59b6/FFFFFF?text=S",
-        itemShield: "https://placehold.co/30x30/3498db/FFFFFF?text=D",
-        itemWeapon: "https://placehold.co/30x30/FFD700/000000?text=W", // Novo item de arma
-        background1: "https://placehold.co/800x600/2C5D35/FFFFFF?text=Floresta",
-        background2: "https://placehold.co/800x600/D2B48C/000000?text=Deserto",
+        itemHealth: "images/saude.png",
+        itemSpeed: "images/speed.png",
+        itemShield: "images/escudo.png",
+        background1: "images/forest.png",
+        background2: "images/desert.png",
         background3: "https://placehold.co/800x600/4E4E4E/FFFFFF?text=Caverna",
         background4: "https://placehold.co/800x600/A52A2A/FFFFFF?text=Vulcao",
         background5: "https://placehold.co/800x600/4B0082/FFFFFF?text=Castelo",
       };
-
       const images = {};
 
+      // --- CONFIGURAÇÃO DAS FASES ---
       const phaseConfigs = [
-        {
-          objectiveType: "survive",
-          duration: 40,
-          objectiveText: "Sobreviva por 40 segundos!",
-          bg: images.background1,
-          maxEnemies: 5,
-          spawnInterval: 3000,
-          enemyTypes: ["normal"],
-        },
-        {
-          objectiveType: "defeat",
-          killTarget: 15,
-          objectiveText: "Derrote 15 inimigos!",
-          bg: images.background2,
-          maxEnemies: 7,
-          spawnInterval: 2500,
-          enemyTypes: ["normal", "fast"],
-        },
-        {
-          objectiveType: "reach_portal",
-          objectiveText: "Alcance o portal!",
-          bg: images.background3,
-          maxEnemies: 8,
-          spawnInterval: 2800,
-          enemyTypes: ["normal", "tank"],
-        },
-        {
-          objectiveType: "survive",
-          duration: 60,
-          objectiveText: "Sobreviva por 60 segundos!",
-          bg: images.background4,
-          maxEnemies: 12,
-          spawnInterval: 1500,
-          enemyTypes: ["fast", "tank"],
-        },
-        {
-          objectiveType: "defeat_boss",
-          objectiveText: "Derrote o Chefe Final!",
-          bg: images.background5,
-          maxEnemies: 1,
-          spawnInterval: 99999,
-          enemyTypes: ["boss"],
-        },
+        { objectiveType: "survive", duration: 40, objectiveText: "Sobreviva por 40 segundos!", bg: images.background1, maxEnemies: 5, spawnInterval: 3000, enemyTypes: ["normal"], },
+        { objectiveType: "defeat", killTarget: 15, objectiveText: "Derrote 15 inimigos!", bg: images.background2, maxEnemies: 7, spawnInterval: 2500, enemyTypes: ["normal", "fast"], },
+        { objectiveType: "reach_portal", objectiveText: "Alcance o portal!", bg: images.background3, maxEnemies: 8, spawnInterval: 2800, enemyTypes: ["normal", "tank"], },
+        { objectiveType: "survive", duration: 60, objectiveText: "Sobreviva por 60 segundos!", bg: images.background4, maxEnemies: 12, spawnInterval: 1500, enemyTypes: ["fast", "tank"], },
+        { objectiveType: "defeat_boss", objectiveText: "Derrote o Chefe Final!", bg: images.background5, maxEnemies: 1, spawnInterval: 99999, enemyTypes: ["boss"], },
       ];
 
+      // --- ESTADO GLOBAL DO JOGO ---
       let gameState;
 
       function resetGameState() {
@@ -286,40 +262,34 @@
           itemSpawnInterval: 10000,
           canShoot: true,
           shootCooldown: 300,
+          camera: { x: 0, y: 0 }, // CÂMERA ADICIONADA
         };
       }
 
+      // --- CLASSES ---
       class Character {
-        constructor(x, y, width, height, speed, sprite) {
-          this.x = x;
-          this.y = y;
-          this.width = width;
-          this.height = height;
-          this.speed = speed;
-          this.sprite = sprite;
-        }
-        draw(ctx) {
-          ctx.drawImage(this.sprite, this.x, this.y, this.width, this.height);
-        }
+        constructor(x, y, width, height, speed, sprite) { this.x = x; this.y = y; this.width = width; this.height = height; this.speed = speed; this.sprite = sprite; }
+        draw(ctx) { ctx.drawImage(this.sprite, this.x, this.y, this.width, this.height); }
       }
 
       class Player extends Character {
         constructor(x, y, width, height, speed, sprite) {
-          super(x, y, width, height, speed, sprite);
-          this.maxHealth = 100;
-          this.health = this.maxHealth;
-          this.projectileDamage = 20; // Dano inicial
-          this.isShielded = false;
-          this.shieldTimer = 0;
+            super(x, y, width, height, speed, sprite);
+            this.maxHealth = 100; this.health = this.maxHealth; this.isShielded = false; this.shieldTimer = 0; this.direction = "down";
         }
         update() {
-          if (gameState.keysPressed["w"]) this.y -= this.speed;
-          if (gameState.keysPressed["s"]) this.y += this.speed;
-          if (gameState.keysPressed["a"]) this.x -= this.speed;
-          if (gameState.keysPressed["d"]) this.x += this.speed;
+          if (gameState.keysPressed["w"]) { this.y -= this.speed; this.direction = 'up'; }
+          if (gameState.keysPressed["s"]) { this.y += this.speed; this.direction = 'down'; }
+          if (gameState.keysPressed["a"]) { this.x -= this.speed; this.direction = 'left'; }
+          if (gameState.keysPressed["d"]) { this.x += this.speed; this.direction = 'right'; }
 
-          this.x = Math.max(0, Math.min(CANVAS_WIDTH - this.width, this.x));
-          this.y = Math.max(0, Math.min(CANVAS_HEIGHT - this.height, this.y));
+          // --- LÓGICA DE LIMITE DE MOVIMENTO ATUALIZADA ---
+          const minX = PLAYABLE_AREA_BORDER;
+          const minY = PLAYABLE_AREA_BORDER;
+          const maxX = MAP_WIDTH - PLAYABLE_AREA_BORDER - this.width;
+          const maxY = MAP_HEIGHT - PLAYABLE_AREA_BORDER - this.height;
+          this.x = Math.max(minX, Math.min(maxX, this.x));
+          this.y = Math.max(minY, Math.min(maxY, this.y));
 
           if (gameState.canShoot) {
             if (gameState.keysPressed["arrowup"]) this.shoot("up");
@@ -327,539 +297,278 @@
             else if (gameState.keysPressed["arrowleft"]) this.shoot("left");
             else if (gameState.keysPressed["arrowright"]) this.shoot("right");
           }
-
-          if (this.isShielded) {
-            this.shieldTimer -= 1000 / 60;
-            if (this.shieldTimer <= 0) this.isShielded = false;
-          }
+          if (this.isShielded) { this.shieldTimer -= 1000 / 60; if (this.shieldTimer <= 0) this.isShielded = false; }
         }
         shoot(direction) {
-          let projX,
-            projY,
-            vx = 0,
-            vy = 0;
-          const projSpeed = 8;
-          const projSize = 10;
-
-          switch (direction) {
-            case "up":
-              projX = this.x + this.width / 2 - projSize / 2;
-              projY = this.y - projSize;
-              vy = -projSpeed;
-              break;
-            case "down":
-              projX = this.x + this.width / 2 - projSize / 2;
-              projY = this.y + this.height;
-              vy = projSpeed;
-              break;
-            case "left":
-              projX = this.x - projSize;
-              projY = this.y + this.height / 2 - projSize / 2;
-              vx = -projSpeed;
-              break;
-            case "right":
-              projX = this.x + this.width;
-              projY = this.y + this.height / 2 - projSize / 2;
-              vx = projSpeed;
-              break;
-          }
-
-          if (vx !== 0 || vy !== 0) {
-            gameState.projectiles.push(
-              new Projectile(
-                projX,
-                projY,
-                projSize,
-                projSize,
-                images.projectile,
-                vx,
-                vy,
-                this.projectileDamage
-              )
-            );
-            gameState.canShoot = false;
-            setTimeout(() => {
-              gameState.canShoot = true;
-            }, gameState.shootCooldown);
-          }
-        }
-        takeDamage(amount) {
-          if (!this.isShielded) {
-            this.health -= amount;
-            if (this.health <= 0) {
-              this.health = 0;
-              gameState.isGameOver = true;
+            this.direction = direction; let projX, projY, vx = 0, vy = 0; const projSpeed = 8; const projSize = 10;
+            switch (direction) {
+                case "up": projX = this.x + this.width / 2 - projSize / 2; projY = this.y - projSize; vy = -projSpeed; break;
+                case "down": projX = this.x + this.width / 2 - projSize / 2; projY = this.y + this.height; vy = projSpeed; break;
+                case "left": projX = this.x - projSize; projY = this.y + this.height / 2 - projSize / 2; vx = -projSpeed; break;
+                case "right": projX = this.x + this.width; projY = this.y + this.height / 2 - projSize / 2; vx = projSpeed; break;
             }
-          }
+            if (vx !== 0 || vy !== 0) {
+                gameState.projectiles.push(new Projectile(projX, projY, projSize, projSize, images.projectile, vx, vy));
+                gameState.canShoot = false; setTimeout(() => { gameState.canShoot = true; }, gameState.shootCooldown);
+            }
         }
+        takeDamage(amount) { if (!this.isShielded) { this.health -= amount; if (this.health <= 0) { this.health = 0; gameState.isGameOver = true; } } }
         applyEffect(effect) {
-          if (effect === "heal")
-            this.health = Math.min(this.maxHealth, this.health + 25);
-          else if (effect === "speed") {
-            this.speed *= 1.5;
-            setTimeout(() => {
-              this.speed /= 1.5;
-            }, 5000);
-          } else if (effect === "shield") {
-            this.isShielded = true;
-            this.shieldTimer = 5000;
-          } else if (effect === "weapon") {
-            this.projectileDamage += 15; // Aumenta o dano da arma
-          }
+          if (effect === "heal") this.health = Math.min(this.maxHealth, this.health + 25);
+          else if (effect === "speed") { this.speed *= 1.5; setTimeout(() => { this.speed /= 1.5; }, 5000); }
+          else if (effect === "shield") { this.isShielded = true; this.shieldTimer = 5000; }
         }
         draw(ctx) {
-          super.draw(ctx);
+          let currentSprite;
+          switch (this.direction) {
+            case 'up': currentSprite = images.player_costas; break; case 'down': currentSprite = images.player_frente; break;
+            case 'left': currentSprite = images.player_esquerda; break; case 'right': currentSprite = images.player_direita; break;
+            default: currentSprite = images.player_frente;
+          }
+          ctx.drawImage(currentSprite, this.x, this.y, this.width, this.height);
+          this.drawWeapon(ctx);
           if (this.isShielded) {
             ctx.beginPath();
-            ctx.arc(
-              this.x + this.width / 2,
-              this.y + this.height / 2,
-              Math.max(this.width, this.height) / 2 + 5,
-              0,
-              Math.PI * 2
-            );
-            ctx.strokeStyle = "rgba(52, 152, 219, 0.8)";
-            ctx.lineWidth = 4;
-            ctx.stroke();
+            ctx.arc(this.x + this.width / 2, this.y + this.height / 2, Math.max(this.width, this.height) / 2 + 5, 0, Math.PI * 2);
+            ctx.strokeStyle = "rgba(52, 152, 219, 0.8)"; ctx.lineWidth = 4; ctx.stroke();
           }
+        }
+        drawWeapon(ctx) {
+            const weaponWidth = 20; const weaponHeight = 8; const pivotX = this.x + this.width / 2; const pivotY = this.y + this.height / 2; let rotation = 0;
+            switch (this.direction) {
+                case 'up': rotation = -Math.PI / 2; break; case 'down': rotation = Math.PI / 2; break;
+                case 'left': rotation = Math.PI; break; case 'right': rotation = 0; break;
+            }
+            ctx.save(); ctx.translate(pivotX, pivotY); ctx.rotate(rotation);
+            ctx.fillStyle = '#666'; ctx.fillRect(5, -weaponHeight / 2, weaponWidth, weaponHeight);
+            ctx.restore();
         }
       }
 
       class Enemy extends Character {
-        constructor(x, y, width, height, speed, sprite, health) {
-          super(x, y, width, height, speed, sprite);
-          this.health = health;
-        }
-        update(player) {
-          const dx = player.x - this.x;
-          const dy = player.y - this.y;
-          const distance = Math.sqrt(dx * dx + dy * dy);
-          if (distance > 1) {
-            this.x += (dx / distance) * this.speed;
-            this.y += (dy / distance) * this.speed;
-          }
-        }
-        takeDamage(amount) {
-          this.health -= amount;
-          return this.health <= 0;
-        }
+        constructor(x, y, width, height, speed, sprite, health) { super(x, y, width, height, speed, sprite); this.health = health; }
+        update(player) { const dx = player.x - this.x; const dy = player.y - this.y; const distance = Math.sqrt(dx * dx + dy * dy); if (distance > 1) { this.x += (dx / distance) * this.speed; this.y += (dy / distance) * this.speed; } }
+        takeDamage(amount) { this.health -= amount; return this.health <= 0; }
       }
 
       class Boss extends Enemy {
-        constructor(x, y, width, height, speed, sprite, health) {
-          super(x, y, width, height, speed, sprite, health);
-          this.maxHealth = health;
-          this.direction = 1;
-        }
-        update(player) {
-          this.x += this.speed * this.direction;
-          if (this.x <= 0 || this.x >= CANVAS_WIDTH - this.width) {
-            this.direction *= -1;
-          }
-        }
+        constructor(x, y, width, height, speed, sprite, health) { super(x, y, width, height, speed, sprite, health); this.maxHealth = health; this.direction = 1; }
+        update(player) { this.x += this.speed * this.direction; if (this.x <= 0 || this.x >= MAP_WIDTH - this.width) { this.direction *= -1; } }
+      }
+
+      class DynamicEnemy extends Enemy {
+          constructor(x, y, width, height, speed, sprites, health) { super(x, y, width, height, speed, sprites.down, health); this.sprites = sprites; this.direction = 'down'; }
+          update(player) { const dx = player.x - this.x; const dy = player.y - this.y; const distance = Math.sqrt(dx * dx + dy * dy); if (Math.abs(dy) > Math.abs(dx)) { this.direction = dy > 0 ? 'down' : 'up'; } else { this.direction = dx > 0 ? 'right' : 'left'; } if (distance > 1) { this.x += (dx / distance) * this.speed; this.y += (dy / distance) * this.speed; } }
+          draw(ctx) { let currentSprite; switch (this.direction) { case 'up': currentSprite = this.sprites.up; break; case 'down': currentSprite = this.sprites.down; break; case 'left': currentSprite = this.sprites.left; break; case 'right': currentSprite = this.sprites.right; break; default: currentSprite = this.sprites.down; } ctx.drawImage(currentSprite, this.x, this.y, this.width, this.height); }
       }
 
       class Projectile extends Character {
-        constructor(x, y, width, height, sprite, vx, vy, damage) {
-          super(x, y, width, height, 0, sprite);
-          this.vx = vx;
-          this.vy = vy;
-          this.damage = damage; // Projétil agora tem dano
-        }
-        update() {
-          this.x += this.vx;
-          this.y += this.vy;
-        }
+        constructor(x, y, width, height, sprite, vx, vy) { super(x, y, width, height, 0, sprite); this.vx = vx; this.vy = vy; }
+        update() { this.x += this.vx; this.y += this.vy; }
       }
 
       class Item extends Character {
-        constructor(x, y, width, height, sprite, effect) {
-          super(x, y, width, height, 0, sprite);
-          this.effect = effect;
-        }
+        constructor(x, y, width, height, sprite, effect) { super(x, y, width, height, 0, sprite); this.effect = effect; }
       }
 
       class Portal extends Character {
-        constructor(x, y, radius, sprite) {
-          super(x, y, radius * 2, radius * 2, 0, sprite);
-          this.radius = radius;
-          this.angle = 0;
-        }
-        update() {
-          this.angle += 0.02;
-        }
+        constructor(x, y, radius, sprite) { super(x, y, radius * 2, radius * 2, 0, sprite); this.radius = radius; this.angle = 0; }
+        update() { this.angle += 0.02; }
         draw(ctx) {
-          ctx.save();
-          ctx.translate(this.x + this.radius, this.y + this.radius);
-          ctx.rotate(this.angle);
-          const gradient = ctx.createRadialGradient(
-            0,
-            0,
-            this.radius / 3,
-            0,
-            0,
-            this.radius
-          );
-          gradient.addColorStop(0, "rgba(142, 68, 173, 0.2)");
-          gradient.addColorStop(0.5, "rgba(155, 89, 182, 0.8)");
-          gradient.addColorStop(1, "rgba(142, 68, 173, 0.2)");
-          ctx.fillStyle = gradient;
-          ctx.beginPath();
-          ctx.arc(0, 0, this.radius, 0, Math.PI * 2);
-          ctx.fill();
+          ctx.save(); ctx.translate(this.x + this.radius, this.y + this.radius); ctx.rotate(this.angle);
+          const gradient = ctx.createRadialGradient(0, 0, this.radius / 3, 0, 0, this.radius);
+          gradient.addColorStop(0, "rgba(142, 68, 173, 0.2)"); gradient.addColorStop(0.5, "rgba(155, 89, 182, 0.8)"); gradient.addColorStop(1, "rgba(142, 68, 173, 0.2)");
+          ctx.fillStyle = gradient; ctx.beginPath(); ctx.arc(0, 0, this.radius, 0, Math.PI * 2); ctx.fill();
           ctx.restore();
         }
       }
 
-      function isColliding(rect1, rect2) {
-        return (
-          rect1.x < rect2.x + rect2.width &&
-          rect1.x + rect1.width > rect2.x &&
-          rect1.y < rect2.y + rect2.height &&
-          rect1.y + rect1.height > rect2.y
-        );
-      }
+      // --- FUNÇÕES DO JOGO ---
+      function isColliding(rect1, rect2) { return (rect1.x < rect2.x + rect2.width && rect1.x + rect1.width > rect2.x && rect1.y < rect2.y + rect2.height && rect1.y + rect1.height > rect2.y); }
 
       function spawnEnemy() {
         const config = phaseConfigs[gameState.phase];
-        const enemyTypeKey =
-          config.enemyTypes[
-            Math.floor(Math.random() * config.enemyTypes.length)
-          ];
-
+        const enemyTypeKey = config.enemyTypes[Math.floor(Math.random() * config.enemyTypes.length)];
         let x, y;
+        // --- LÓGICA DE SPAWN ATUALIZADA PARA O MAPA MAIOR ---
         const side = Math.floor(Math.random() * 4);
-        if (side === 0) {
-          x = Math.random() * CANVAS_WIDTH;
-          y = -50;
-        } else if (side === 1) {
-          x = CANVAS_WIDTH;
-          y = Math.random() * CANVAS_HEIGHT;
-        } else if (side === 2) {
-          x = Math.random() * CANVAS_WIDTH;
-          y = CANVAS_HEIGHT;
-        } else {
-          x = -50;
-          y = Math.random() * CANVAS_HEIGHT;
-        }
+        if (side === 0) { x = Math.random() * MAP_WIDTH; y = -50; }
+        else if (side === 1) { x = MAP_WIDTH; y = Math.random() * MAP_HEIGHT; }
+        else if (side === 2) { x = Math.random() * MAP_WIDTH; y = MAP_HEIGHT; }
+        else { x = -50; y = Math.random() * MAP_HEIGHT; }
 
-        // Vida dos inimigos aumentada
         switch (enemyTypeKey) {
-          case "fast":
-            gameState.enemies.push(
-              new Enemy(x, y, 35, 35, 2.8, images.fastEnemy, 60)
-            );
-            break;
-          case "tank":
-            gameState.enemies.push(
-              new Enemy(x, y, 50, 50, 1.2, images.tankEnemy, 150)
-            );
-            break;
-          case "boss":
-            gameState.enemies.push(
-              new Boss(
-                CANVAS_WIDTH / 2 - 50,
-                50,
-                100,
-                100,
-                2,
-                images.bossEnemy,
-                2500
-              )
-            );
-            break;
-          default:
-            gameState.enemies.push(
-              new Enemy(x, y, 40, 40, 1.8, images.enemy, 80)
-            );
-            break;
+          case "fast": gameState.enemies.push(new Enemy(x, y, 35, 35, 2.5, images.fastEnemy, 20)); break;
+          case "tank": gameState.enemies.push(new DynamicEnemy(x, y, 50, 50, 1, { up: images.golem_costas, down: images.golem_frente, left: images.golem_esquerda, right: images.golem_direita }, 80)); break;
+          case "boss": gameState.enemies.push(new Boss(MAP_WIDTH / 2 - 50, PLAYABLE_AREA_BORDER + 50, 100, 100, 2, images.bossEnemy, 1000)); break;
+          default: gameState.enemies.push(new Enemy(x, y, 40, 40, 1.5, images.enemy, 40)); break;
         }
       }
 
       function spawnItem() {
-        const x = Math.random() * (CANVAS_WIDTH - 60) + 30;
-        const y = Math.random() * (CANVAS_HEIGHT - 60) + 30;
-        const types = [
-          { sprite: images.itemHealth, effect: "heal" },
-          { sprite: images.itemSpeed, effect: "speed" },
-          { sprite: images.itemShield, effect: "shield" },
-        ];
-        const { sprite, effect } =
-          types[Math.floor(Math.random() * types.length)];
+        // Spawna itens dentro da área jogável
+        const x = Math.random() * (MAP_WIDTH - PLAYABLE_AREA_BORDER * 2 - 60) + PLAYABLE_AREA_BORDER + 30;
+        const y = Math.random() * (MAP_HEIGHT - PLAYABLE_AREA_BORDER * 2 - 60) + PLAYABLE_AREA_BORDER + 30;
+        const types = [{ sprite: images.itemHealth, effect: "heal" }, { sprite: images.itemSpeed, effect: "speed" }, { sprite: images.itemShield, effect: "shield" }, ];
+        const { sprite, effect } = types[Math.floor(Math.random() * types.length)];
         gameState.items.push(new Item(x, y, 30, 30, sprite, effect));
       }
 
-      function spawnWeaponUpgrade() {
-        const x = Math.random() * (CANVAS_WIDTH - 100) + 50;
-        const y = Math.random() * (CANVAS_HEIGHT - 100) + 50;
-        gameState.items.push(
-          new Item(x, y, 30, 30, images.itemWeapon, "weapon")
-        );
-      }
-
       function setupPhase(phaseIndex) {
-        gameState.phase = phaseIndex;
-        gameState.enemies = [];
-        gameState.items = [];
-        gameState.projectiles = [];
-        gameState.phaseStartTime = Date.now();
-        gameState.lastEnemySpawnTime = 0;
-        gameState.portal = null;
-        document
-          .getElementById("boss-health-container")
-          .classList.add("hidden");
+        gameState.phase = phaseIndex; gameState.enemies = []; gameState.items = []; gameState.projectiles = [];
+        gameState.phaseStartTime = Date.now(); gameState.lastEnemySpawnTime = 0; gameState.portal = null;
+        document.getElementById("boss-health-container").classList.add("hidden");
 
         const config = phaseConfigs[phaseIndex];
-        canvas.style.backgroundImage = `url('${config.bg.src}')`;
-        document.getElementById(
-          "objective-text"
-        ).textContent = `Objetivo: ${config.objectiveText}`;
-
-        spawnWeaponUpgrade(); // Garante um upgrade de arma por fase
-
+        document.getElementById("objective-text").textContent = `Objetivo: ${config.objectiveText}`;
         if (config.objectiveType === "reach_portal") {
-          gameState.portal = new Portal(
-            CANVAS_WIDTH - 80,
-            CANVAS_HEIGHT / 2 - 40,
-            40
-          );
+            // Posição do portal ajustada para o mapa maior
+            gameState.portal = new Portal(MAP_WIDTH - PLAYABLE_AREA_BORDER - 80, MAP_HEIGHT / 2 - 40, 40);
         }
         if (config.objectiveType === "defeat_boss") {
-          spawnEnemy();
-          document
-            .getElementById("boss-health-container")
-            .classList.remove("hidden");
+            spawnEnemy(); document.getElementById("boss-health-container").classList.remove("hidden");
         }
       }
 
       function checkPhaseCompletion() {
-        const config = phaseConfigs[gameState.phase];
-        let completed = false;
-
-        if (config.objectiveType === "survive") {
-          const timeElapsed = (Date.now() - gameState.phaseStartTime) / 1000;
-          if (timeElapsed >= config.duration) completed = true;
-        } else if (config.objectiveType === "defeat") {
-          if (gameState.score >= config.killTarget) completed = true;
-        } else if (config.objectiveType === "reach_portal") {
-          if (
-            gameState.portal &&
-            isColliding(gameState.player, gameState.portal)
-          )
-            completed = true;
-        } else if (config.objectiveType === "defeat_boss") {
-          if (gameState.enemies.length === 0) completed = true;
-        }
+        const config = phaseConfigs[gameState.phase]; let completed = false;
+        if (config.objectiveType === "survive") { const timeElapsed = (Date.now() - gameState.phaseStartTime) / 1000; if (timeElapsed >= config.duration) completed = true; }
+        else if (config.objectiveType === "defeat") { if (gameState.score >= config.killTarget) completed = true; }
+        else if (config.objectiveType === "reach_portal") { if (gameState.portal && isColliding(gameState.player, gameState.portal)) completed = true; }
+        else if (config.objectiveType === "defeat_boss") { if (gameState.enemies.length === 0) completed = true; }
 
         if (completed) {
-          if (gameState.phase + 1 < phaseConfigs.length) {
-            setupPhase(gameState.phase + 1);
-          } else {
-            gameState.isGameOver = true;
-            showEndScreen(true);
-          }
+          if (gameState.phase + 1 < phaseConfigs.length) { setupPhase(gameState.phase + 1); }
+          else { gameState.isGameOver = true; showEndScreen(true); }
         }
+      }
+
+      // --- NOVA FUNÇÃO PARA ATUALIZAR A CÂMERA ---
+      function updateCamera() {
+        const cam = gameState.camera;
+        const player = gameState.player;
+        // Centraliza a câmera no jogador
+        cam.x = player.x - VIEWPORT_WIDTH / 2;
+        cam.y = player.y - VIEWPORT_HEIGHT / 2;
+        // Limita a câmera para não sair do mapa
+        cam.x = Math.max(0, Math.min(MAP_WIDTH - VIEWPORT_WIDTH, cam.x));
+        cam.y = Math.max(0, Math.min(MAP_HEIGHT - VIEWPORT_HEIGHT, cam.y));
       }
 
       function update() {
         if (gameState.isGameOver) return;
-
         const now = Date.now();
         gameState.player.update();
+        updateCamera(); // Atualiza a câmera a cada frame
 
         const config = phaseConfigs[gameState.phase];
-        if (
-          now - gameState.lastEnemySpawnTime > config.spawnInterval &&
-          gameState.enemies.length < config.maxEnemies
-        ) {
-          spawnEnemy();
-          gameState.lastEnemySpawnTime = now;
-        }
-        if (
-          now - gameState.lastItemSpawnTime > gameState.itemSpawnInterval &&
-          gameState.items.length < 4
-        ) {
-          // Aumentado para 4 itens
-          spawnItem();
-          gameState.lastItemSpawnTime = now;
-        }
+        if (now - gameState.lastEnemySpawnTime > config.spawnInterval && gameState.enemies.length < config.maxEnemies) { spawnEnemy(); gameState.lastEnemySpawnTime = now; }
+        if (now - gameState.lastItemSpawnTime > gameState.itemSpawnInterval && gameState.items.length < 3) { spawnItem(); gameState.lastItemSpawnTime = now; }
 
         gameState.projectiles.forEach((p, i) => {
           p.update();
-          if (
-            p.y + p.height < 0 ||
-            p.y > CANVAS_HEIGHT ||
-            p.x + p.width < 0 ||
-            p.x > CANVAS_WIDTH
-          ) {
+          // --- LÓGICA DE REMOÇÃO DE PROJÉTIL ATUALIZADA ---
+          if (p.y + p.height < 0 || p.y > MAP_HEIGHT || p.x + p.width < 0 || p.x > MAP_WIDTH) {
             gameState.projectiles.splice(i, 1);
           }
         });
 
         gameState.enemies.forEach((enemy, eIndex) => {
           enemy.update(gameState.player);
-
-          if (isColliding(gameState.player, enemy)) {
-            gameState.player.takeDamage(20);
-            // Na colisão, remove inimigos normais mas não o chefe
-            if (!(enemy instanceof Boss)) {
-              gameState.enemies.splice(eIndex, 1);
-            }
-          }
-
+          if (isColliding(gameState.player, enemy)) { gameState.player.takeDamage(20); }
           gameState.projectiles.forEach((proj, pIndex) => {
             if (isColliding(proj, enemy)) {
               gameState.projectiles.splice(pIndex, 1);
-              if (enemy.takeDamage(proj.damage)) {
+              if (enemy.takeDamage(20)) {
                 gameState.enemies.splice(eIndex, 1);
-                if (config.objectiveType === "defeat") {
-                  gameState.score++;
-                }
+                if (config.objectiveType === "defeat") { gameState.score++; }
               }
             }
           });
         });
 
-        gameState.items.forEach((item, i) => {
-          if (isColliding(gameState.player, item)) {
-            gameState.player.applyEffect(item.effect);
-            gameState.items.splice(i, 1);
-          }
-        });
-
+        gameState.items.forEach((item, i) => { if (isColliding(gameState.player, item)) { gameState.player.applyEffect(item.effect); gameState.items.splice(i, 1); } });
         if (gameState.portal) gameState.portal.update();
         checkPhaseCompletion();
       }
 
       function draw() {
-        ctx.clearRect(0, 0, CANVAS_WIDTH, CANVAS_HEIGHT);
+        const config = phaseConfigs[gameState.phase];
+        ctx.clearRect(0, 0, VIEWPORT_WIDTH, VIEWPORT_HEIGHT);
+        // --- LÓGICA DE DESENHO ATUALIZADA COM A CÂMERA ---
+        ctx.save();
+        ctx.translate(-gameState.camera.x, -gameState.camera.y);
+        // Desenha o fundo para preencher o mapa inteiro
+        if (config.bg.src) {
+            ctx.drawImage(config.bg, 0, 0, MAP_WIDTH, MAP_HEIGHT);
+        }
         if (gameState.portal) gameState.portal.draw(ctx);
         gameState.player.draw(ctx);
         gameState.items.forEach((item) => item.draw(ctx));
         gameState.enemies.forEach((enemy) => enemy.draw(ctx));
         gameState.projectiles.forEach((p) => p.draw(ctx));
+        ctx.restore();
       }
 
       function drawHUD() {
-        const playerHealth =
-          (gameState.player.health / gameState.player.maxHealth) * 100;
-        document.getElementById(
-          "player-health-bar"
-        ).style.width = `${playerHealth}%`;
-        document.getElementById("health-text").textContent =
-          gameState.player.health;
-        document.getElementById("damage-text").textContent =
-          gameState.player.projectileDamage;
+        const playerHealth = (gameState.player.health / gameState.player.maxHealth) * 100;
+        document.getElementById("player-health-bar").style.width = `${playerHealth}%`;
+        document.getElementById("health-text").textContent = gameState.player.health;
         document.getElementById("phase-text").textContent = gameState.phase + 1;
         document.getElementById("score-text").textContent = gameState.score;
-
         const config = phaseConfigs[gameState.phase];
         if (config.objectiveType === "survive") {
           const timeElapsed = (Date.now() - gameState.phaseStartTime) / 1000;
-          const timeLeft = Math.max(
-            0,
-            Math.ceil(config.duration - timeElapsed)
-          );
-          document.getElementById(
-            "objective-text"
-          ).textContent = `Sobreviva! ${timeLeft}s`;
+          const timeLeft = Math.max(0, Math.ceil(config.duration - timeElapsed));
+          document.getElementById("objective-text").textContent = `Sobreviva! ${timeLeft}s`;
         } else if (config.objectiveType === "defeat") {
-          document.getElementById(
-            "objective-text"
-          ).textContent = `Derrote ${config.killTarget} inimigos (${gameState.score}/${config.killTarget})`;
+          document.getElementById("objective-text").textContent = `Derrote ${config.killTarget} inimigos (${gameState.score}/${config.killTarget})`;
         }
-
         if (config.objectiveType === "defeat_boss" && gameState.enemies[0]) {
-          const bossHealth =
-            (gameState.enemies[0].health / gameState.enemies[0].maxHealth) *
-            100;
-          document.getElementById(
-            "boss-health-bar"
-          ).style.width = `${bossHealth}%`;
+          const bossHealth = (gameState.enemies[0].health / gameState.enemies[0].maxHealth) * 100;
+          document.getElementById("boss-health-bar").style.width = `${bossHealth}%`;
         }
       }
 
       function showEndScreen(didWin) {
-        const screen = document.getElementById("message-screen");
-        const title = document.getElementById("message-title");
-        const subtitle = document.getElementById("message-subtitle");
-
-        if (didWin) {
-          title.textContent = "Você Zerou!";
-          title.style.color = "#2ecc71";
-          subtitle.textContent = "A bravura prevaleceu!";
-        } else {
-          title.textContent = "Game Over";
-          title.style.color = "#ff4136";
-          subtitle.textContent = "A escuridão venceu esta vez.";
-        }
+        const screen = document.getElementById("message-screen"); const title = document.getElementById("message-title"); const subtitle = document.getElementById("message-subtitle");
+        if (didWin) { title.textContent = "Você Zerou!"; title.style.color = "#2ecc71"; subtitle.textContent = "A bravura prevaleceu!"; }
+        else { title.textContent = "Game Over"; title.style.color = "#ff4136"; subtitle.textContent = "A escuridão venceu desta vez."; }
         screen.classList.remove("hidden");
       }
 
       function gameLoop(timestamp) {
-        if (gameState.isGameOver) {
-          if (
-            document
-              .getElementById("message-screen")
-              .classList.contains("hidden")
-          ) {
-            showEndScreen(false);
-          }
-          return;
-        }
-
+        if (gameState.isGameOver) { if (document.getElementById("message-screen").classList.contains("hidden")) { showEndScreen(false); } return; }
         update(timestamp);
         draw();
         drawHUD();
-
         requestAnimationFrame(gameLoop);
       }
 
       function init() {
         resetGameState();
         document.getElementById("message-screen").classList.add("hidden");
-        gameState.player = new Player(
-          CANVAS_WIDTH / 2 - 20,
-          CANVAS_HEIGHT - 80,
-          40,
-          60,
-          4,
-          images.player
-        );
+        // --- POSIÇÃO INICIAL DO JOGADOR ATUALIZADA ---
+        gameState.player = new Player(MAP_WIDTH / 2 - 20, MAP_HEIGHT - PLAYABLE_AREA_BORDER - 80, 40, 60, 4, images.player_frente);
         setupPhase(0);
         gameLoop();
       }
 
       function loadAssets() {
-        let loaded = 0;
-        const total = Object.keys(assetSources).length;
+        let loaded = 0; const total = Object.keys(assetSources).length;
         for (let key in assetSources) {
-          images[key] = new Image();
-          images[key].src = assetSources[key];
+          images[key] = new Image(); images[key].src = assetSources[key];
           images[key].onload = () => {
             loaded++;
-            if (key.startsWith("background")) {
-              const phaseIndex =
-                parseInt(key.replace("background", ""), 10) - 1;
-              if (phaseConfigs[phaseIndex]) {
-                phaseConfigs[phaseIndex].bg = images[key];
-              }
-            }
-            if (loaded === total) {
-              init();
-            }
+            if (key.startsWith("background")) { const phaseIndex = parseInt(key.replace("background", ""), 10) - 1; if (phaseConfigs[phaseIndex]) { phaseConfigs[phaseIndex].bg = images[key]; } }
+            if (loaded === total) { init(); }
           };
         }
       }
 
-      window.addEventListener("keydown", (e) => {
-        gameState.keysPressed[e.key.toLowerCase()] = true;
-      });
-      window.addEventListener("keyup", (e) => {
-        gameState.keysPressed[e.key.toLowerCase()] = false;
-      });
+      window.addEventListener("keydown", (e) => { gameState.keysPressed[e.key.toLowerCase()] = true; });
+      window.addEventListener("keyup", (e) => { gameState.keysPressed[e.key.toLowerCase()] = false; });
       document.getElementById("restart-button").addEventListener("click", init);
-
       loadAssets();
     </script>
   </body>
