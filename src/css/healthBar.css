@@ -1,0 +1,16 @@
+/* Barra de vida */
+
+.health-bar-container {
+  width: 150px;
+  height: 20px;
+  background-color: #555;
+  border: 2px solid #222;
+  border-radius: 5px;
+}
+
+.health-bar {
+  height: 100%;
+  background-color: #28a745;
+  border-radius: 3px;
+  transition: width 0.3s ease-in-out, background-color 0.3s ease-in-out;
+}

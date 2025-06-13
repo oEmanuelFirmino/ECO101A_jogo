@@ -1,0 +1,16 @@
+#restart-button {
+  padding: 15px 30px;
+  font-size: 20px;
+  font-family: "Press Start 2P", cursive;
+  color: #fff;
+  background-color: #0074d9;
+  border: 3px solid #fff;
+  border-radius: 10px;
+  cursor: pointer;
+  transition: background-color 0.3s, transform 0.2s;
+}
+
+#restart-button:hover {
+  background-color: #009eff;
+  transform: scale(1.05);
+}

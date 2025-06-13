@@ -1,0 +1,21 @@
+@import url("./bossHeatlhBar.css");
+@import url("./gameCanvas.css");
+@import url("./gameContainer.css");
+@import url("./healthBar.css");
+@import url("./hud.css");
+@import url("./mainContainer.css");
+@import url("./messageScreen.css");
+@import url("./restartButton.css");
+
+body {
+  margin: 0;
+  padding: 0;
+  background-color: #0d0d0d;
+  color: #fff;
+  font-family: "VT323", monospace;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 100vh;
+  overflow: hidden;
+}
