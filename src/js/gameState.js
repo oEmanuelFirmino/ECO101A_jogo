@@ -1,3 +1,5 @@
+// src/js/gameState.js
+
 export let gameState;
 
 export function resetGameState() {
@@ -17,6 +19,7 @@ export function resetGameState() {
     itemSpawnInterval: 10000,
     canShoot: true,
     shootCooldown: 300,
+    isFireRateActive: false, // <-- NOVA LINHA AQUI
     camera: { x: 0, y: 0 },
   };
 }
