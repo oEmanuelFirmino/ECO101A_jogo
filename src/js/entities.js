@@ -1,7 +1,7 @@
 // src/js/entities.js
 
 import { gameState } from './gameState.js';
-import { images, MAP_WIDTH, PLAYABLE_AREA_BORDER } from './config.js';
+import { images, MAP_WIDTH, PLAYABLE_AREA_BORDER, MAP_HEIGHT } from './config.js';
 
 class Character {
   constructor(x, y, width, height, speed, sprite) {
@@ -12,9 +12,9 @@ class Character {
     this.speed = speed;
     this.sprite = sprite;
   }
+  
   draw(ctx) {
-    // Adicionamos uma verificação para garantir que o sprite e o ctx existam antes de desenhar
-    if (ctx && this.sprite && this.sprite.complete) {
+    if (ctx && this.sprite && this.sprite.complete && this.sprite.naturalWidth !== 0 && !isNaN(this.x) && !isNaN(this.y)) {
       ctx.drawImage(this.sprite, this.x, this.y, this.width, this.height);
     }
   }
@@ -35,21 +35,18 @@ export class Player extends Character {
     if (gameState.keysPressed["s"]) { this.y += this.speed; this.direction = 'down'; }
     if (gameState.keysPressed["a"]) { this.x -= this.speed; this.direction = 'left'; }
     if (gameState.keysPressed["d"]) { this.x += this.speed; this.direction = 'right'; }
-
     const minX = PLAYABLE_AREA_BORDER;
     const minY = PLAYABLE_AREA_BORDER;
     const maxX = MAP_WIDTH - PLAYABLE_AREA_BORDER - this.width;
-    const maxY = MAP_WIDTH - PLAYABLE_AREA_BORDER - this.height;
+    const maxY = MAP_HEIGHT - PLAYABLE_AREA_BORDER - this.height;
     this.x = Math.max(minX, Math.min(maxX, this.x));
     this.y = Math.max(minY, Math.min(maxY, this.y));
-
     if (gameState.canShoot) {
       if (gameState.keysPressed["arrowup"]) this.shoot("up");
       else if (gameState.keysPressed["arrowdown"]) this.shoot("down");
       else if (gameState.keysPressed["arrowleft"]) this.shoot("left");
       else if (gameState.keysPressed["arrowright"]) this.shoot("right");
     }
-
     if (this.isShielded) {
       this.shieldTimer -= 1000 / 60;
       if (this.shieldTimer <= 0) this.isShielded = false;
@@ -85,15 +82,10 @@ export class Player extends Character {
   }
 
   applyEffect(effect) {
-    if (effect === "heal") {
-      this.health = Math.min(this.maxHealth, this.health + 25);
-    } else if (effect === "speed") {
-      this.speed *= 1.5;
-      setTimeout(() => { this.speed /= 1.5; }, 5000);
-    } else if (effect === "shield") {
-      this.isShielded = true;
-      this.shieldTimer = 5000;
-    } else if (effect === "firerate") {
+    if (effect === "heal") { this.health = Math.min(this.maxHealth, this.health + 50); } 
+    else if (effect === "speed") { this.speed *= 1.5; setTimeout(() => { this.speed /= 1.5; }, 5000); } 
+    else if (effect === "shield") { this.isShielded = true; this.shieldTimer = 5000; } 
+    else if (effect === "firerate") {
       if (gameState.isFireRateActive) return;
       gameState.isFireRateActive = true;
       const originalCooldown = gameState.shootCooldown;
@@ -106,20 +98,24 @@ export class Player extends Character {
   }
 
   draw(ctx) {
-    let currentSprite;
+    if (gameState.isPlayerInvincible) {
+      if (Math.floor(Date.now() / 100) % 2 === 0) { return; }
+    }
+    
+    let playerSprite;
     switch (this.direction) {
-      case 'up': currentSprite = images.player_costas; break;
-      case 'down': currentSprite = images.player_frente; break;
-      case 'left': currentSprite = images.player_esquerda; break;
-      case 'right': currentSprite = images.player_direita; break;
-      default: currentSprite = images.player_frente;
+      case 'up': playerSprite = images.player_costas; break;
+      case 'down': playerSprite = images.player_frente; break;
+      case 'left': playerSprite = images.player_esquerda; break;
+      case 'right': playerSprite = images.player_direita; break;
+      default: playerSprite = images.player_frente;
     }
     
-    if (currentSprite && currentSprite.complete) {
-        ctx.drawImage(currentSprite, this.x, this.y, this.width, this.height);
-    }
+    // Desenha o corpo do jogador com uma nova instância temporária para não mudar o 'this.sprite'
+    const body = new Character(this.x, this.y, this.width, this.height, 0, playerSprite);
+    body.draw(ctx);
     
-    this.drawWeapon(ctx); // Passa o 'ctx' para a função de desenhar a arma
+    this.drawWeapon(ctx);
 
     if (this.isShielded) {
       ctx.beginPath();
@@ -133,60 +129,147 @@ export class Player extends Character {
   drawWeapon(ctx) {
     const pivotX = this.x + this.width / 2;
     const pivotY = this.y + this.height / 2;
-    let rotation = 0;
-
-    switch (this.direction) {
-      case 'up': rotation = -Math.PI / 2; break;
-      case 'down': rotation = Math.PI / 2; break;
-      case 'left': rotation = Math.PI; break;
-      case 'right': rotation = 0; break;
-    }
-
     ctx.save();
     ctx.translate(pivotX, pivotY);
+    let rotation = 0;
+    switch (this.direction) {
+        case 'up': rotation = -Math.PI / 2; break;
+        case 'down': rotation = Math.PI / 2; break;
+        case 'left': ctx.scale(-1, 1); break;
+        case 'right': break;
+    }
     ctx.rotate(rotation);
-
-    if (gameState.isFireRateActive) {
-      const weaponWidth = 30;
-      const weaponHeight = 12;
-      ctx.fillStyle = '#99ff99';
-      ctx.fillRect(5, -weaponHeight / 2, weaponWidth, weaponHeight);
-    } else {
-      const weaponWidth = 20;
-      const weaponHeight = 8;
-      ctx.fillStyle = '#666';
-      ctx.fillRect(5, -weaponHeight / 2, weaponWidth, weaponHeight);
+    const weaponImage = gameState.isFireRateActive ? images.powerupWeapon : images.pistol;
+    if (weaponImage && weaponImage.complete && weaponImage.naturalWidth !== 0) {
+        const weaponWidth = 35;
+        const weaponHeight = 35;
+        ctx.drawImage(weaponImage, 10, -weaponHeight / 2, weaponWidth, weaponHeight);
     }
     ctx.restore();
   }
 }
 
 export class Enemy extends Character {
-    constructor(x, y, width, height, speed, sprite, health) { super(x, y, width, height, speed, sprite); this.health = health; }
-    update(player) { const dx = player.x - this.x; const dy = player.y - this.y; const distance = Math.sqrt(dx * dx + dy * dy); if (distance > 1) { this.x += (dx / distance) * this.speed; this.y += (dy / distance) * this.speed; } }
+    constructor(x, y, width, height, speed, sprite, health, damage) { 
+        super(x, y, width, height, speed, sprite); 
+        this.health = health; 
+        this.damage = damage;
+    }
+    update(player) {
+        if (!player) return;
+        const dx = player.x - this.x;
+        const dy = player.y - this.y;
+        const distance = Math.sqrt(dx * dx + dy * dy);
+        if (distance > 1) { this.x += (dx / distance) * this.speed; this.y += (dy / distance) * this.speed; }
+    }
     takeDamage(amount) { this.health -= amount; return this.health <= 0; }
 }
 
 export class Boss extends Enemy {
-    constructor(x, y, width, height, speed, sprite, health) { super(x, y, width, height, speed, sprite); this.maxHealth = health; this.direction = 1; }
+    constructor(x, y, width, height, speed, sprite, health, damage) { 
+        super(x, y, width, height, speed, sprite, health, damage); 
+        this.maxHealth = health; 
+        this.direction = 1; 
+    }
     update(player) { this.x += this.speed * this.direction; if (this.x <= 0 || this.x >= MAP_WIDTH - this.width) { this.direction *= -1; } }
 }
 
 export class DynamicEnemy extends Enemy {
-    constructor(x, y, width, height, speed, sprites, health) { super(x, y, width, height, speed, sprites.down, health); this.sprites = sprites; this.direction = 'down'; }
-    update(player) { const dx = player.x - this.x; const dy = player.y - this.y; const distance = Math.sqrt(dx * dx + dy * dy); if (Math.abs(dy) > Math.abs(dx)) { this.direction = dy > 0 ? 'down' : 'up'; } else { this.direction = dx > 0 ? 'right' : 'left'; } if (distance > 1) { this.x += (dx / distance) * this.speed; this.y += (dy / distance) * this.speed; } }
-    draw(ctx) { let currentSprite; switch (this.direction) { case 'up': currentSprite = this.sprites.up; break; case 'down': currentSprite = this.sprites.down; break; case 'left': currentSprite = this.sprites.left; break; case 'right': currentSprite = this.sprites.right; break; default: currentSprite = this.sprites.down; } if(ctx && currentSprite && currentSprite.complete) {ctx.drawImage(currentSprite, this.x, this.y, this.width, this.height);} }
+    constructor(x, y, width, height, speed, sprites, health, damage) { 
+        super(x, y, width, height, speed, sprites.down, health, damage); 
+        this.sprites = sprites; 
+        this.direction = 'down'; 
+    }
+    update(player) {
+        if (!player) return;
+        const dx = player.x - this.x;
+        const dy = player.y - this.y;
+        const distance = Math.sqrt(dx * dx + dy * dy);
+        if (Math.abs(dy) > Math.abs(dx)) { this.direction = dy > 0 ? 'down' : 'up'; }
+        else { this.direction = dx > 0 ? 'right' : 'left'; }
+        if (distance > 1) { this.x += (dx / distance) * this.speed; this.y += (dy / distance) * this.speed; }
+    }
+    draw(ctx) { 
+        let currentSprite; 
+        switch (this.direction) { 
+            case 'up': currentSprite = this.sprites.up; break; 
+            case 'down': currentSprite = this.sprites.down; break; 
+            case 'left': currentSprite = this.sprites.left; break; 
+            case 'right': currentSprite = this.sprites.right; break; 
+            default: currentSprite = this.sprites.down; 
+        } 
+        const tempSprite = new Character(this.x, this.y, this.width, this.height, 0, currentSprite);
+        tempSprite.draw(ctx);
+    }
+}
+
+export class FinalBoss extends Enemy {
+  constructor(x, y, width, height, speed, sprite, health, damage) {
+    super(x, y, width, height, speed, sprite, health, damage);
+    this.maxHealth = health;
+    this.state = 'idle';
+    this.stateTimer = 0;
+    this.lastAttackTime = Date.now();
+  }
+  update(player) {
+    this.stateTimer -= 1000 / 60;
+    if (this.stateTimer <= 0) { this.chooseNextState(player); }
+    if (this.state === 'charging' && player) {
+        const dx = player.x - this.x;
+        const dy = player.y - this.y;
+        const distance = Math.sqrt(dx * dx + dy * dy);
+        if (distance > 1) { this.x += (dx / distance) * (this.speed * 2.5); this.y += (dy / distance) * (this.speed * 2.5); }
+    }
+  }
+  chooseNextState(player) {
+    if (!player) { this.state = 'idle'; return; }
+    const now = Date.now();
+    if (now - this.lastAttackTime < 2000) { this.state = 'idle'; return; }
+    const healthPercent = this.health / this.maxHealth;
+    const availableStates = ['charging', 'shooting'];
+    if (healthPercent <= 0.5) { availableStates.push('summoning'); }
+    const nextState = availableStates[Math.floor(Math.random() * availableStates.length)];
+    this.state = nextState;
+    this.lastAttackTime = now;
+    switch (nextState) {
+      case 'charging': this.stateTimer = 1500; break;
+      case 'shooting': this.shootAtPlayer(player); this.stateTimer = 1000; break;
+      case 'summoning': this.summonMinions(); this.stateTimer = 2000; break;
+    }
+  }
+  shootAtPlayer(player) {
+    if (!player) return;
+    const projSpeed = 5; const numProjectiles = 5; const angleStep = Math.PI / 16;
+    const dx = player.x - this.x; const dy = player.y - this.y;
+    const centralAngle = Math.atan2(dy, dx);
+    for (let i = 0; i < numProjectiles; i++) {
+        const angle = centralAngle - (angleStep * (numProjectiles - 1) / 2) + (i * angleStep);
+        const vx = Math.cos(angle) * projSpeed; const vy = Math.sin(angle) * projSpeed;
+        gameState.enemyProjectiles.push(new EnemyProjectile(this.x + this.width / 2, this.y + this.height / 2, 15, 15, images.enemyProjectile, vx, vy, 20));
+    }
+  }
+  summonMinions() {
+    for (let i = 0; i < 2; i++) {
+        const spawnX = this.x + (Math.random() - 0.5) * 200;
+        const spawnY = this.y + (Math.random() - 0.5) * 200;
+        gameState.enemies.push(new Enemy(spawnX, spawnY, 35, 35, 2.5, images.fastEnemy, 20, 50));
+    }
+  }
 }
 
 export class Projectile extends Character {
     constructor(x, y, width, height, sprite, vx, vy) { super(x, y, width, height, 0, sprite); this.vx = vx; this.vy = vy; }
     update() { this.x += this.vx; this.y += this.vy; }
 }
-
+export class EnemyProjectile extends Projectile {
+    constructor(x, y, width, height, sprite, vx, vy, damage) {
+        super(x, y, width, height, sprite, vx, vy);
+        this.damage = damage;
+    }
+}
 export class Item extends Character {
     constructor(x, y, width, height, sprite, effect) { super(x, y, width, height, 0, sprite); this.effect = effect; }
 }
-
 export class Portal extends Character {
     constructor(x, y, radius, sprite) { super(x, y, radius * 2, radius * 2, 0, sprite); this.radius = radius; this.angle = 0; }
     update() { this.angle += 0.02; }
