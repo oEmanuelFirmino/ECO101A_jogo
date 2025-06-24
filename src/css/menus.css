@@ -1,0 +1,72 @@
+/* src/css/menus.css */
+
+/* O menu inicial continua em tela cheia */
+#start-menu {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.95);
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  text-align: center;
+  font-family: "Press Start 2P", cursive;
+  z-index: 200; /* Garante que ele fique na frente de tudo */
+}
+
+/* O menu de pause e a tela de mensagem agora são ABSOLUTOS ao contêiner do jogo */
+#pause-menu, #message-screen {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.85);
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  text-align: center;
+  font-family: "Press Start 2P", cursive;
+  z-index: 100;
+}
+
+#game-title, #pause-title, #message-title {
+  font-size: 48px;
+  color: #ffc107;
+  margin-bottom: 20px;
+  text-shadow: 3px 3px 0 #000;
+}
+
+#message-title {
+    color: #ff4136; /* Mantém o vermelho para Game Over */
+}
+
+#game-subtitle, #message-subtitle {
+  font-size: 20px;
+  color: #f0f0f0;
+  margin-bottom: 40px;
+  line-height: 1.5;
+  max-width: 80%;
+}
+
+#start-button, #resume-button, #restart-pause-button {
+  padding: 15px 30px;
+  font-size: 20px;
+  font-family: "Press Start 2P", cursive;
+  color: #fff;
+  background-color: #28a745;
+  border: 3px solid #fff;
+  border-radius: 10px;
+  cursor: pointer;
+  transition: background-color 0.3s, transform 0.2s;
+  margin-top: 10px;
+}
+
+#start-button:hover, #resume-button:hover, #restart-pause-button:hover {
+  background-color: #218838;
+  transform: scale(1.05);
+}

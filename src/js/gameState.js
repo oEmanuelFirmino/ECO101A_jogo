@@ -1,6 +1,5 @@
 // src/js/gameState.js
 
-// Estado inicial do jogo
 let gameState = {
   player: null,
   enemies: [],
@@ -13,6 +12,7 @@ let gameState = {
   phase: 0,
   score: 0,
   isGameOver: false,
+  isPaused: false,
   canShoot: true,
   shootCooldown: 500,
   itemSpawnInterval: 10000,
@@ -23,10 +23,8 @@ let gameState = {
   isPlayerInvincible: false,
 };
 
-// Exporta o estado para que possa ser modificado por outros módulos
 export { gameState };
 
-// Função para resetar o estado para um novo jogo
 export function resetGameState() {
   Object.assign(gameState, {
     player: null,
@@ -40,11 +38,9 @@ export function resetGameState() {
     phase: 0,
     score: 0,
     isGameOver: false,
+    isPaused: false,
     canShoot: true,
     isFireRateActive: false,
     isPlayerInvincible: false,
   });
 }
-
-// NOVO: Linha para permitir a inspeção do gameState no console durante a depuração
-window.gameState = gameState;

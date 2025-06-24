@@ -6,6 +6,19 @@ import { Player } from './entities.js';
 import { isColliding, spawnEnemy, spawnItem, setupPhase, checkPhaseCompletion, updateCamera } from './gameLogic.js';
 import { drawHUD, showEndScreen } from './ui.js';
 
+// --- Elementos da UI ---
+const startMenu = document.getElementById("start-menu");
+const pauseMenu = document.getElementById("pause-menu");
+const hud = document.getElementById("hud");
+const gameContainer = document.getElementById("game-container");
+const messageScreen = document.getElementById("message-screen");
+const pauseButton = document.getElementById("pause-button");
+const startButton = document.getElementById("start-button");
+const resumeButton = document.getElementById("resume-button");
+const restartPauseButton = document.getElementById("restart-pause-button");
+const restartEndButton = document.getElementById("restart-button");
+
+// --- Lógica Principal do Jogo ---
 function applyPlayerDamage(damageAmount) {
     if (!gameState.player || gameState.isPlayerInvincible) return;
     gameState.player.takeDamage(damageAmount);
@@ -83,6 +96,7 @@ function update() {
 }
 
 function drawVisionLimiter() {
+    if (!gameState.player) return;
     const player = gameState.player;
     const playerViewX = player.x - gameState.camera.x + player.width / 2;
     const playerViewY = player.y - gameState.camera.y + player.height / 2;
@@ -116,77 +130,107 @@ function draw() {
   }
 }
 
+// --- Game Loop e Funções de Controle de Estado ---
+let isGameLoopRunning = false;
 function gameLoop() {
   if (gameState.isGameOver) {
-    if (document.getElementById("message-screen").classList.contains("hidden")) {
-      showEndScreen(false);
-    }
+    if (messageScreen.classList.contains("hidden")) { showEndScreen(false); }
+    isGameLoopRunning = false;
     return;
   }
-  update();
-  draw();
-  drawHUD();
+  if (!gameState.isPaused) {
+    update();
+    draw();
+    drawHUD();
+  }
   requestAnimationFrame(gameLoop);
 }
 
 function init() {
   resetGameState();
-  document.getElementById("message-screen").classList.add("hidden");
-  gameState.player = new Player(MAP_WIDTH / 2 - 20, MAP_HEIGHT - PLAYABLE_AREA_BORDER - 80, 40, 60, 4, images.player_frente);
+  messageScreen.classList.add("hidden");
+  pauseMenu.classList.add("hidden");
+  gameState.player = new Player(MAP_WIDTH / 2, MAP_HEIGHT - PLAYABLE_AREA_BORDER - 60, 40, 60, 4, images.player_frente);
   setupPhase(0);
-  gameLoop();
+  if (!isGameLoopRunning) {
+      isGameLoopRunning = true;
+      requestAnimationFrame(gameLoop);
+  }
+}
+
+function startGame() {
+    startMenu.classList.add('hidden');
+    hud.classList.remove('hidden');
+    gameContainer.classList.remove('hidden');
+    playMusicOnFirstInteraction();
+    init();
+}
+
+function togglePause() {
+    if (gameState.isGameOver || gameContainer.classList.contains('hidden')) return;
+    gameState.isPaused = !gameState.isPaused;
+    if (gameState.isPaused) {
+        pauseMenu.classList.remove('hidden');
+    } else {
+        pauseMenu.classList.add('hidden');
+    }
+}
+
+function returnToStartMenu() {
+    isGameLoopRunning = false;
+    hud.classList.add('hidden');
+    gameContainer.classList.add('hidden');
+    pauseMenu.classList.add('hidden');
+    messageScreen.classList.add('hidden');
+    startMenu.classList.remove('hidden');
 }
 
 function playMusicOnFirstInteraction() {
   const soundtrack = document.getElementById("game-soundtrack");
-  const startPlayback = () => {
-    if (soundtrack && soundtrack.paused) {
-      soundtrack.play().catch(error => { console.error("Falha na reprodução da música:", error); });
-    }
-    window.removeEventListener("keydown", startPlayback);
-    window.removeEventListener("click", startPlayback);
-  };
-  window.addEventListener("keydown", startPlayback);
-  window.addEventListener("click", startPlayback);
+  if (soundtrack && soundtrack.paused) {
+    soundtrack.play().catch(error => { console.error("Falha na reprodução da música:", error); });
+  }
 }
 
 function loadAssets() {
   let loaded = 0; 
   const total = Object.keys(assetSources).length;
-  if (total === 0) {
-      init();
-      playMusicOnFirstInteraction();
-      return;
-  }
+  if (total === 0) { return; }
   for (let key in assetSources) {
     images[key] = new Image(); 
     images[key].src = assetSources[key];
     images[key].onload = () => {
       loaded++;
-      if (key.startsWith("background")) {
-        const phaseIndex = parseInt(key.replace("background", ""), 10) - 1;
-        if (phaseConfigs[phaseIndex]) {
-          phaseConfigs[phaseIndex].bg = images[key];
-        }
-      }
       if (loaded === total) {
-        init();
-        playMusicOnFirstInteraction();
+        console.log("Assets carregados. Jogo pronto para iniciar.");
       }
     };
     images[key].onerror = () => {
         loaded++;
-        console.error(`Falha ao carregar o asset: ${key} com src ${images[key].src}`);
+        console.error(`Falha ao carregar o asset: ${key}`);
         if (loaded === total) {
-            init();
-            playMusicOnFirstInteraction();
+            console.log("Assets carregados com alguns erros.");
         }
     };
   }
 }
 
-window.addEventListener("keydown", (e) => { if (gameState && gameState.keysPressed) gameState.keysPressed[e.key.toLowerCase()] = true; });
-window.addEventListener("keyup", (e) => { if (gameState && gameState.keysPressed) gameState.keysPressed[e.key.toLowerCase()] = false; });
-document.getElementById("restart-button").addEventListener("click", init);
+// --- EVENT LISTENERS ---
+startButton.addEventListener("click", startGame);
+pauseButton.addEventListener("click", togglePause);
+resumeButton.addEventListener("click", togglePause);
+restartPauseButton.addEventListener("click", returnToStartMenu);
+restartEndButton.addEventListener("click", returnToStartMenu);
+
+window.addEventListener("keydown", (e) => { 
+  if (gameState && gameState.keysPressed && !gameState.isPaused) {
+    gameState.keysPressed[e.key.toLowerCase()] = true;
+  }
+});
+window.addEventListener("keyup", (e) => { 
+  if (gameState && gameState.keysPressed) {
+    gameState.keysPressed[e.key.toLowerCase()] = false; 
+  }
+});
 
 loadAssets();

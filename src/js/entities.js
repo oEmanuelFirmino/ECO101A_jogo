@@ -111,7 +111,6 @@ export class Player extends Character {
       default: playerSprite = images.player_frente;
     }
     
-    // Desenha o corpo do jogador com uma nova instância temporária para não mudar o 'this.sprite'
     const body = new Character(this.x, this.y, this.width, this.height, 0, playerSprite);
     body.draw(ctx);
     
@@ -163,15 +162,6 @@ export class Enemy extends Character {
         if (distance > 1) { this.x += (dx / distance) * this.speed; this.y += (dy / distance) * this.speed; }
     }
     takeDamage(amount) { this.health -= amount; return this.health <= 0; }
-}
-
-export class Boss extends Enemy {
-    constructor(x, y, width, height, speed, sprite, health, damage) { 
-        super(x, y, width, height, speed, sprite, health, damage); 
-        this.maxHealth = health; 
-        this.direction = 1; 
-    }
-    update(player) { this.x += this.speed * this.direction; if (this.x <= 0 || this.x >= MAP_WIDTH - this.width) { this.direction *= -1; } }
 }
 
 export class DynamicEnemy extends Enemy {

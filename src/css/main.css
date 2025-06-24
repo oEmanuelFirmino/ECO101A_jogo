@@ -1,21 +1,88 @@
-@import url("./bossHeatlhBar.css");
-@import url("./gameCanvas.css");
-@import url("./gameContainer.css");
-@import url("./healthBar.css");
-@import url("./hud.css");
-@import url("./mainContainer.css");
-@import url("./messageScreen.css");
-@import url("./restartButton.css");
+/* src/css/main.css */
 
+/* Estilos Globais e de Layout */
 body {
   margin: 0;
   padding: 0;
+  height: 100vh;
   background-color: #0d0d0d;
-  color: #fff;
   font-family: "VT323", monospace;
   display: flex;
   justify-content: center;
   align-items: center;
-  height: 100vh;
+}
+
+#game-wrapper {
+  position: relative;
+  /* MODIFICADO: Tamanho da caixa do jogo alterado para 600x600 */
+  width: 600px;
+  height: 600px;
+  background: #222;
+  border: 4px solid #4a4a4a;
+  box-shadow: 0 0 25px rgba(0, 0, 0, 0.5);
   overflow: hidden;
 }
+
+.hidden {
+  display: none !important;
+}
+
+/* HUD (Interface) */
+#hud {
+  padding: 10px;
+  background-color: #111;
+  border-bottom: 2px solid #4a4a4a;
+  color: #fff;
+  text-shadow: 1px 1px 2px black;
+}
+.hud-top { display: flex; justify-content: space-between; align-items: center; }
+.hud-bottom { margin-top: 8px; text-align: center; }
+.hud-stats { display: flex; align-items: center; gap: 20px; }
+#hud p { margin: 0; font-size: 16px; }
+#objective-text { color: #ffc107; font-size: 18px; }
+#pause-button { font-family: "Press Start 2P"; font-size: 12px; cursor: pointer; border-radius: 5px; border: 2px solid white; background: #666; color: white; padding: 8px 12px;}
+
+/* Contêiner do Jogo e Canvas */
+#game-container { position: relative; }
+canvas { display: block; }
+
+/* Menus de Sobreposição */
+#start-menu, #pause-menu, #message-screen {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(10, 10, 10, 0.95);
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  text-align: center;
+  font-family: "Press Start 2P", cursive;
+  z-index: 100;
+  color: #fff;
+}
+#game-title, #pause-title, #message-title { font-size: 32px; color: #ffc107; margin-bottom: 20px; text-shadow: 3px 3px 0 #000; }
+#game-subtitle, #message-subtitle { font-size: 16px; color: #f0f0f0; margin-bottom: 40px; }
+#start-button, #resume-button, #restart-pause-button, #restart-button { padding: 15px 30px; font-size: 16px; font-family: "Press Start 2P"; cursor: pointer; border: 3px solid white; border-radius: 8px; margin-top: 10px; color: white;}
+#start-button { background-color: #28a745; }
+#resume-button { background-color: #007bff; }
+#restart-pause-button, #restart-button { background-color: #dc3545; }
+
+/* Barras de Vida */
+.health-bar-container {
+  width: 150px;
+  height: 20px;
+  background-color: #555;
+  border: 2px solid #222;
+  border-radius: 5px; /* Adicionado para bordas arredondadas */
+}
+.health-bar {
+  height: 100%;
+  background-color: #28a745;
+  border-radius: 3px; /* Adicionado para bordas arredondadas */
+  transition: width 0.2s ease-out; /* Adicionado para uma transição suave */
+}
+#boss-health-container { position: absolute; bottom: 20px; left: 10%; width: 80%; height: 25px; z-index: 5; background-color: #555; border: 3px solid #222; border-radius: 8px; }
+#boss-health-bar { background-color: #e74c3c; height: 100%; }

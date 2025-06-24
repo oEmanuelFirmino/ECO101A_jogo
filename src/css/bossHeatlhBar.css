@@ -13,3 +13,7 @@
 #boss-health-bar {
   background-color: #e74c3c;
 }
+
+.hidden {
+  display: none;
+}
