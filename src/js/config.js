@@ -5,7 +5,7 @@ export const canvas = document.getElementById("gameCanvas");
 // MODIFICADO: Define o tamanho da área de jogo para 600px de largura.
 // A altura é um pouco menor para dar espaço ao HUD dentro da caixa.
 export const VIEWPORT_WIDTH = 600;
-export const VIEWPORT_HEIGHT = 520; 
+export const VIEWPORT_HEIGHT = 545; 
 
 // Garantir que o canvas no HTML tenha o mesmo tamanho
 canvas.width = VIEWPORT_WIDTH;
