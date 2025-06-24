@@ -30,6 +30,8 @@ function applyPlayerDamage(damageAmount) {
     setTimeout(() => { gameState.isPlayerInvincible = false; }, 1000);
 }
 
+// Substitua sua função update inteira por esta em main.js
+
 function update() {
   if (gameState.isGameOver || !gameState.player) return;
 
@@ -109,6 +111,10 @@ function update() {
     } 
   }
 
+  // --- LÓGICA DA LAVA ---
+  // Atualiza a animação de cada poça de lava
+  gameState.lavaPools.forEach(pool => pool.update());
+
   // Lógica de dano da lava
   for (const pool of gameState.lavaPools) {
       if (isColliding(gameState.player, pool)) {
@@ -120,12 +126,11 @@ function update() {
           }
           break; // Sai do loop se já encontrou uma colisão
       }
-  } // <<< A CHAVE CORRIGIDA ESTÁ AQUI
-
+  }
+  
   if (gameState.portal) gameState.portal.update();
   checkPhaseCompletion();
 }
-
 function drawVisionLimiter() {
     if (!gameState.player) return;
     const player = gameState.player;
@@ -149,6 +154,7 @@ function draw() {
   if (bgImage && bgImage.complete && bgImage.naturalWidth !== 0) {
     ctx.drawImage(bgImage, 0, 0, MAP_WIDTH, MAP_HEIGHT);
   }
+   gameState.lavaPools.forEach((pool) => pool && pool.draw(ctx));
   if (gameState.portal) gameState.portal.draw(ctx);
   if (gameState.player) gameState.player.draw(ctx);
   gameState.items.forEach((item) => item && item.draw(ctx));

@@ -383,25 +383,74 @@ export class Portal extends Character {
   }
 }
 
+// Substitua a classe LavaPool inteira por esta versão aprimorada
 export class LavaPool extends Character {
     constructor(x, y, radius) {
-        // A hitbox será um quadrado baseado no raio
         super(x - radius, y - radius, radius * 2, radius * 2, 0, null);
         this.radius = radius;
-        this.damage = 10; // Dano que a lava causa por pulso
-        this.animationTimer = Math.random() * 1000; // Para animação assíncrona
+        this.damage = 10;
+        this.animationTimer = Math.random() * 2000; // Timer principal para a pulsação
+        this.bubbles = []; // Array para guardar as bolhas de lava
     }
 
-    // Função para desenhar a lava (um círculo vermelho pulsante)
-    draw(ctx) {
-        this.animationTimer += 16; // Aproximadamente 60fps
-        const pulse = Math.sin(this.animationTimer / 300) * 0.2 + 0.8; // Pulsa entre 80% e 100%
+    // A poça de lava agora tem sua própria lógica de atualização para as animações
+    update() {
+        this.animationTimer += 16; // Avança o timer da animação
 
-        ctx.globalAlpha = 0.5 * pulse; // Define a transparência com o pulso
-        ctx.fillStyle = "#ff4500"; // Cor de lava (laranja-vermelho)
+        // Atualiza as bolhas existentes
+        for (let i = this.bubbles.length - 1; i >= 0; i--) {
+            this.bubbles[i].lifetime--;
+            if (this.bubbles[i].lifetime <= 0) {
+                this.bubbles.splice(i, 1);
+            }
+        }
+
+        // Cria novas bolhas aleatoriamente
+        if (Math.random() < 0.1) {
+            const size = Math.random() * 5 + 2; // Tamanho da bolha
+            const angle = Math.random() * Math.PI * 2;
+            const dist = Math.random() * (this.radius * 0.6); // Distância do centro
+            this.bubbles.push({
+                x: (this.x + this.radius) + Math.cos(angle) * dist,
+                y: (this.y + this.radius) + Math.sin(angle) * dist,
+                size: size,
+                lifetime: Math.random() * 60 + 30, // Tempo de vida da bolha
+                maxLifetime: 60,
+            });
+        }
+    }
+
+    // A nova função de desenho, muito mais detalhada
+    draw(ctx) {
+        // --- 1. Desenha as camadas principais da lava ---
+        const pulseOuter = Math.sin(this.animationTimer / 400) * 0.1 + 0.9; // Pulso lento para a borda
+        const pulseInner = Math.sin(this.animationTimer / 250) * 0.15 + 0.85; // Pulso rápido para o centro
+
+        // Camada externa (vermelho escuro)
+        ctx.fillStyle = "rgba(200, 50, 0, 0.4)";
         ctx.beginPath();
-        ctx.arc(this.x + this.radius, this.y + this.radius, this.radius * pulse, 0, Math.PI * 2);
+        ctx.arc(this.x + this.radius, this.y + this.radius, this.radius * pulseOuter, 0, Math.PI * 2);
         ctx.fill();
-        ctx.globalAlpha = 1.0; // Restaura a transparência global
+
+        // Camada do meio (laranja)
+        ctx.fillStyle = "rgba(255, 100, 0, 0.6)";
+        ctx.beginPath();
+        ctx.arc(this.x + this.radius, this.y + this.radius, this.radius * 0.7 * pulseOuter, 0, Math.PI * 2);
+        ctx.fill();
+
+        // Camada central (amarelo)
+        ctx.fillStyle = "rgba(255, 200, 0, 0.8)";
+        ctx.beginPath();
+        ctx.arc(this.x + this.radius, this.y + this.radius, this.radius * 0.4 * pulseInner, 0, Math.PI * 2);
+        ctx.fill();
+        
+        // --- 2. Desenha as bolhas de lava ---
+        this.bubbles.forEach(bubble => {
+            const lifePercent = bubble.lifetime / bubble.maxLifetime;
+            ctx.fillStyle = `rgba(255, 220, 100, ${lifePercent * 0.9})`;
+            ctx.beginPath();
+            ctx.arc(bubble.x, bubble.y, bubble.size * lifePercent, 0, Math.PI * 2);
+            ctx.fill();
+        });
     }
 }

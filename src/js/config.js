@@ -5,7 +5,7 @@ export const canvas = document.getElementById("gameCanvas");
 // MODIFICADO: Define o tamanho da área de jogo para 600px de largura.
 // A altura é um pouco menor para dar espaço ao HUD dentro da caixa.
 export const VIEWPORT_WIDTH = 600;
-export const VIEWPORT_HEIGHT = 545; 
+export const VIEWPORT_HEIGHT = 570; 
 
 // Garantir que o canvas no HTML tenha o mesmo tamanho
 canvas.width = VIEWPORT_WIDTH;
@@ -50,11 +50,11 @@ export const assetSources = {
 export const images = {};
 
 export const phaseConfigs = [
-   { objectiveType: "survive", duration: 40, objectiveText: "Sobreviva por 40 segundos!", maxEnemies: 5, spawnInterval: 3000, enemyTypes: ["normal", "fast"], },
-   { objectiveType: "defeat", killTarget: 15, objectiveText: "Derrote 15 inimigos!", maxEnemies: 7, spawnInterval: 2500, enemyTypes: ["normal", "fast"], },
+   { objectiveType: "survive", duration: 4, objectiveText: "Sobreviva por 40 segundos!", maxEnemies: 5, spawnInterval: 3000, enemyTypes: ["normal", "fast"], },
+   { objectiveType: "defeat", killTarget: 5, objectiveText: "Derrote 15 inimigos!", maxEnemies: 7, spawnInterval: 2500, enemyTypes: ["normal", "fast"], },
    { 
      objectiveType: "survive", 
-     duration: 50,
+     duration: 5,
      objectiveText: "Sobreviva na caverna escura!", 
      maxEnemies: 10, 
      spawnInterval: 2500, 
@@ -63,7 +63,7 @@ export const phaseConfigs = [
    },
   { 
   objectiveType: "survive", 
-  duration: 60, // Duração diminuída de 60 para 50 segundos
+  duration: 6, // Duração diminuída de 60 para 50 segundos
   objectiveText: "Sobreviva ao calor infernal!", 
   maxEnemies: 10, // Máximo de inimigos diminuído de 12 para 10
   spawnInterval: 2000, // Intervalo entre inimigos aumentado de 1500ms para 2000ms

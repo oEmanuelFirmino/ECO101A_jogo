@@ -102,18 +102,18 @@ export function setupPhase(phaseIndex) {
     // <<< LÓGICA PARA CRIAR AS POÇAS DE LAVA >>>
     // Apenas na fase 4 (índice 3)
     if (phaseIndex === 3) {
-        // **IMPORTANTE**: Ajuste as coordenadas (x, y) e o raio para corresponder ao seu cenário!
-        const poolLocations = [
-            { x: 200, y: 300, radius: 50 },
-            { x: 800, y: 250, radius: 70 },
-            { x: 400, y: 700, radius: 60 },
-            { x: 750, y: 800, radius: 40 },
-        ];
+    const poolLocations = [
+        { x: 200, y: 300, radius: 50 },
+        { x: 800, y: 250, radius: 70 },
+        { x: 400, y: 700, radius: 60 },
+        { x: 750, y: 800, radius: 40 },
+        { x: 400, y: 400, radius: 60 },
+    ];
 
-        poolLocations.forEach(p => {
-            gameState.lavaPools.push(new LavaPool(p.x, p.y, p.radius));
-        });
-    }
+    poolLocations.forEach(p => {
+        gameState.lavaPools.push(new LavaPool(p.x, p.y, p.radius));
+    });
+}
 }
 
 export function checkPhaseCompletion() {

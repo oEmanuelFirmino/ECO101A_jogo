@@ -3,31 +3,46 @@
 import { gameState } from './gameState.js';
 import { phaseConfigs } from './config.js';
 
+// Substitua a função drawHUD inteira em ui.js
+
 export function drawHUD() {
-  // Sai da função se o jogador ainda não existe
   if (!gameState.player) return;
 
-  // --- Lógica da Barra de Vida do Jogador ---
+  // --- LÓGICA DA BARRA DE VIDA DINÂMICA ---
   const playerHealthPercent = (gameState.player.health / gameState.player.maxHealth) * 100;
   const playerHealthBar = document.getElementById("player-health-bar");
+  
   if (playerHealthBar) {
+    // Atualiza a largura da barra
     playerHealthBar.style.width = `${playerHealthPercent}%`;
+
+    // Define o gradiente da cor com base no percentual de vida
+    let healthGradient;
+    if (playerHealthPercent > 60) {
+      // Gradiente Verde (vida alta)
+      healthGradient = 'linear-gradient(to right, #63e674, #28a745)';
+    } else if (playerHealthPercent > 30) {
+      // Gradiente Amarelo/Laranja (vida média)
+      healthGradient = 'linear-gradient(to right, #ffdd57, #ff9f1a)';
+    } else {
+      // Gradiente Vermelho (vida baixa)
+      healthGradient = 'linear-gradient(to right, #e85a5a, #dc3545)';
+    }
+    playerHealthBar.style.background = healthGradient;
   }
   
-  // Atualiza o texto da vida sobre a barra
-  const healthText = document.getElementById("player-health-text"); // <<< Mude o ID aqui
+  // Atualiza o texto da vida
+  const healthText = document.getElementById("player-health-text");
   if (healthText) {
     healthText.textContent = gameState.player.health;
   }
 
-  // Atualiza outros textos da HUD
+  // Atualiza o texto da fase
   document.getElementById("phase-text").textContent = gameState.phase + 1;
-  document.getElementById("score-text").textContent = gameState.score;
   
+  // Atualiza o texto do objetivo
   const config = phaseConfigs[gameState.phase];
   if (!config) return;
-
-
   const objectiveText = document.getElementById("objective-text");
   if (config.objectiveType === "survive") {
     const timeElapsed = (Date.now() - gameState.phaseStartTime) / 1000;
@@ -70,29 +85,36 @@ export function showEndScreen(didWin) {
   screen.classList.remove("hidden");
 }
 
+// Substitua a função showNarrativeScreen inteira em ui.js
+
 export function showNarrativeScreen(title, subtitle, onComplete) {
   const screen = document.getElementById("message-screen");
   const titleEl = document.getElementById("message-title");
   const subtitleEl = document.getElementById("message-subtitle");
   const restartButton = document.getElementById("restart-button");
   const continueButton = document.getElementById("continue-button");
+  const hud = document.getElementById("hud"); // Pega o elemento do HUD
+
+  // Esconde o HUD do jogo
+  hud.classList.add('hidden');
 
   titleEl.textContent = title;
   subtitleEl.textContent = subtitle;
-  titleEl.style.color = '#ffc107'; // Cor de ouro para a narrativa
-
+  
   restartButton.classList.add('hidden');
   continueButton.classList.remove('hidden');
   screen.classList.remove('hidden');
 
-  // Pausa o jogo enquanto a história é exibida
   gameState.isPaused = true;
 
   const clickHandler = () => {
     screen.classList.add('hidden');
     continueButton.classList.add('hidden');
+    
+    // Mostra o HUD novamente antes de continuar o jogo
+    hud.classList.remove('hidden');
+
     gameState.isPaused = false;
-    // Remove o listener para não ser chamado múltiplas vezes
     continueButton.removeEventListener('click', clickHandler);
     if (onComplete) {
       onComplete();
@@ -101,5 +123,6 @@ export function showNarrativeScreen(title, subtitle, onComplete) {
 
   continueButton.addEventListener('click', clickHandler, { once: true });
 }
+ 
 
 
