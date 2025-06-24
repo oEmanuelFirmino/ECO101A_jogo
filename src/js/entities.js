@@ -382,3 +382,26 @@ export class Portal extends Character {
     ctx.restore();
   }
 }
+
+export class LavaPool extends Character {
+    constructor(x, y, radius) {
+        // A hitbox será um quadrado baseado no raio
+        super(x - radius, y - radius, radius * 2, radius * 2, 0, null);
+        this.radius = radius;
+        this.damage = 10; // Dano que a lava causa por pulso
+        this.animationTimer = Math.random() * 1000; // Para animação assíncrona
+    }
+
+    // Função para desenhar a lava (um círculo vermelho pulsante)
+    draw(ctx) {
+        this.animationTimer += 16; // Aproximadamente 60fps
+        const pulse = Math.sin(this.animationTimer / 300) * 0.2 + 0.8; // Pulsa entre 80% e 100%
+
+        ctx.globalAlpha = 0.5 * pulse; // Define a transparência com o pulso
+        ctx.fillStyle = "#ff4500"; // Cor de lava (laranja-vermelho)
+        ctx.beginPath();
+        ctx.arc(this.x + this.radius, this.y + this.radius, this.radius * pulse, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.globalAlpha = 1.0; // Restaura a transparência global
+    }
+}

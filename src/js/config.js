@@ -55,13 +55,20 @@ export const phaseConfigs = [
    { 
      objectiveType: "survive", 
      duration: 50,
-     objectiveText: "Sobreviva na escuridão!", 
+     objectiveText: "Sobreviva na caverna escura!", 
      maxEnemies: 10, 
      spawnInterval: 2500, 
      enemyTypes: ["fast", "tank"], 
      hasFog: true,
    },
-   { objectiveType: "survive", duration: 60, objectiveText: "Sobreviva por 60 segundos!", maxEnemies: 12, spawnInterval: 1500, enemyTypes: ["fast", "tank"], },
+  { 
+  objectiveType: "survive", 
+  duration: 60, // Duração diminuída de 60 para 50 segundos
+  objectiveText: "Sobreviva ao calor infernal!", 
+  maxEnemies: 10, // Máximo de inimigos diminuído de 12 para 10
+  spawnInterval: 2000, // Intervalo entre inimigos aumentado de 1500ms para 2000ms
+  enemyTypes: ["fast", "tank"], 
+},
    { 
      objectiveType: "defeat_boss", 
      objectiveText: "Derrote o Guardião Ancestral!", 

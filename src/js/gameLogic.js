@@ -1,12 +1,11 @@
-// src/js/gameLogic.js
+// NO TOPO do arquivo gameLogic.js, coloque APENAS este bloco de importações:
 
 import { gameState } from './gameState.js';
 import { phaseConfigs, images, MAP_WIDTH, MAP_HEIGHT, PLAYABLE_AREA_BORDER, VIEWPORT_WIDTH, VIEWPORT_HEIGHT } from './config.js';
-import { Enemy, DynamicEnemy, FinalBoss, Item, Portal } from './entities.js';
-// import { showEndScreen } from './ui.js';
+import { Enemy, DynamicEnemy, FinalBoss, Item, Portal, LavaPool } from './entities.js';
 import { showNarrativeScreen, showEndScreen } from './ui.js';
 
-
+// ... o resto do seu código (const narrativeTexts = [...], etc.)
 // Substitua o objeto 'narrativeTexts' por este array
 const narrativeTexts = [
   { // Posição 0: Texto para iniciar a Fase 2
@@ -71,21 +70,27 @@ export function spawnItem() {
     }
 }
 
+// Substitua a função setupPhase inteira
 export function setupPhase(phaseIndex) {
     if (!phaseConfigs[phaseIndex]) return;
 
-    gameState.phase = phaseIndex; 
-    gameState.enemies = []; 
-    gameState.items = []; 
-    gameState.projectiles = [];
-    gameState.enemyProjectiles = [];
-    gameState.phaseStartTime = Date.now(); 
-    gameState.lastEnemySpawnTime = 0; 
-    gameState.portal = null;
-    
+    // Limpa o estado da fase anterior
+    Object.assign(gameState, {
+        phase: phaseIndex,
+        enemies: [],
+        items: [],
+        projectiles: [],
+        enemyProjectiles: [],
+        portal: null,
+        lavaPools: [], // Limpa as poças de lava
+        phaseStartTime: Date.now(),
+        lastEnemySpawnTime: 0,
+    });
+
     const config = phaseConfigs[phaseIndex];
     document.getElementById("objective-text").textContent = `Objetivo: ${config.objectiveText}`;
-    
+
+    // Lógica para o chefe
     const bossHealthContainer = document.getElementById("boss-health-container");
     if (config.objectiveType === "defeat_boss") {
         bossHealthContainer.classList.remove("hidden");
@@ -94,10 +99,20 @@ export function setupPhase(phaseIndex) {
         bossHealthContainer.classList.add("hidden");
     }
 
-    if (config.objectiveType === "reach_portal") {
-        const portalX = MAP_WIDTH - PLAYABLE_AREA_BORDER - 80;
-        const portalY = MAP_HEIGHT / 2 - 40;
-        gameState.portal = new Portal(portalX, portalY, 40);
+    // <<< LÓGICA PARA CRIAR AS POÇAS DE LAVA >>>
+    // Apenas na fase 4 (índice 3)
+    if (phaseIndex === 3) {
+        // **IMPORTANTE**: Ajuste as coordenadas (x, y) e o raio para corresponder ao seu cenário!
+        const poolLocations = [
+            { x: 200, y: 300, radius: 50 },
+            { x: 800, y: 250, radius: 70 },
+            { x: 400, y: 700, radius: 60 },
+            { x: 750, y: 800, radius: 40 },
+        ];
+
+        poolLocations.forEach(p => {
+            gameState.lavaPools.push(new LavaPool(p.x, p.y, p.radius));
+        });
     }
 }
 

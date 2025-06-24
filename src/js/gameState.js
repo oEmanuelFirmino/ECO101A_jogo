@@ -21,6 +21,7 @@ let gameState = {
   lastItemSpawnTime: 0,
   isFireRateActive: false,
   isPlayerInvincible: false,
+  lavaPools: [],
 };
 
 export { gameState };
@@ -42,5 +43,6 @@ export function resetGameState() {
     canShoot: true,
     isFireRateActive: false,
     isPlayerInvincible: false,
+    lavaPools: [],
   });
 }

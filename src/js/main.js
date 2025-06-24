@@ -9,7 +9,7 @@ import { Player } from './entities.js';
 import { isColliding, spawnEnemy, spawnItem, setupPhase, checkPhaseCompletion, updateCamera } from './gameLogic.js';
 //import { drawHUD, showEndScreen } from './ui.js';
 import {  linkPhaseBackgrounds } from './config.js';
-
+let lastLavaDamageTime = 0;
 // --- Elementos da UI ---
 const startMenu = document.getElementById("start-menu");
 const pauseMenu = document.getElementById("pause-menu");
@@ -32,20 +32,27 @@ function applyPlayerDamage(damageAmount) {
 
 function update() {
   if (gameState.isGameOver || !gameState.player) return;
+
   const now = Date.now();
   gameState.player.update();
   updateCamera();
   const config = phaseConfigs[gameState.phase];
+
+  // Lógica de spawn de inimigos
   if (config.objectiveType !== "defeat_boss" && config.spawnInterval) {
     if (now - gameState.lastEnemySpawnTime > config.spawnInterval && gameState.enemies.length < config.maxEnemies) { 
       spawnEnemy(); 
       gameState.lastEnemySpawnTime = now; 
     }
   }
+
+  // Lógica de spawn de itens
   if (now - gameState.lastItemSpawnTime > gameState.itemSpawnInterval && gameState.items.length < 3) { 
     spawnItem(); 
     gameState.lastItemSpawnTime = now; 
   }
+
+  // Atualiza projéteis do jogador
   for (let i = gameState.projectiles.length - 1; i >= 0; i--) {
     const p = gameState.projectiles[i];
     if (!p) continue;
@@ -54,6 +61,8 @@ function update() {
       gameState.projectiles.splice(i, 1);
     }
   }
+
+  // Atualiza projéteis dos inimigos
   for (let i = gameState.enemyProjectiles.length - 1; i >= 0; i--) {
     const p = gameState.enemyProjectiles[i];
     if (!p) continue;
@@ -65,6 +74,8 @@ function update() {
         gameState.enemyProjectiles.splice(i, 1);
     }
   }
+
+  // Atualiza inimigos e checa colisão com projéteis do jogador
   for (let i = gameState.enemies.length - 1; i >= 0; i--) {
     const enemy = gameState.enemies[i];
     if (!enemy) continue;
@@ -87,6 +98,8 @@ function update() {
       }
     }
   }
+
+  // Checa colisão do jogador com itens
   for (let i = gameState.items.length - 1; i >= 0; i--) {
     const item = gameState.items[i];
     if (!item) continue;
@@ -95,6 +108,20 @@ function update() {
       gameState.items.splice(i, 1); 
     } 
   }
+
+  // Lógica de dano da lava
+  for (const pool of gameState.lavaPools) {
+      if (isColliding(gameState.player, pool)) {
+          const now = Date.now();
+          // Causa dano a cada 700ms se o jogador estiver na lava
+          if (now - lastLavaDamageTime > 700) {
+              gameState.player.takeDamage(pool.damage);
+              lastLavaDamageTime = now;
+          }
+          break; // Sai do loop se já encontrou uma colisão
+      }
+  } // <<< A CHAVE CORRIGIDA ESTÁ AQUI
+
   if (gameState.portal) gameState.portal.update();
   checkPhaseCompletion();
 }
