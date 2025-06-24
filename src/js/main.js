@@ -5,6 +5,7 @@ import { gameState, resetGameState } from './gameState.js';
 import { Player } from './entities.js';
 import { isColliding, spawnEnemy, spawnItem, setupPhase, checkPhaseCompletion, updateCamera } from './gameLogic.js';
 import { drawHUD, showEndScreen } from './ui.js';
+import {  linkPhaseBackgrounds } from './config.js';
 
 // --- Elementos da UI ---
 const startMenu = document.getElementById("start-menu");
@@ -193,24 +194,29 @@ function playMusicOnFirstInteraction() {
 }
 
 function loadAssets() {
-  let loaded = 0; 
+  let loaded = 0;
   const total = Object.keys(assetSources).length;
-  if (total === 0) { return; }
+  if (total === 0) {
+    linkPhaseBackgrounds(); // Chame mesmo se não houver assets
+    return;
+  }
   for (let key in assetSources) {
-    images[key] = new Image(); 
+    images[key] = new Image();
     images[key].src = assetSources[key];
     images[key].onload = () => {
       loaded++;
       if (loaded === total) {
         console.log("Assets carregados. Jogo pronto para iniciar.");
+        linkPhaseBackgrounds(); // <<-- CHAME A FUNÇÃO AQUI
       }
     };
     images[key].onerror = () => {
-        loaded++;
-        console.error(`Falha ao carregar o asset: ${key}`);
-        if (loaded === total) {
-            console.log("Assets carregados com alguns erros.");
-        }
+      loaded++;
+      console.error(`Falha ao carregar o asset: ${key}`);
+      if (loaded === total) {
+        console.log("Assets carregados com alguns erros.");
+        linkPhaseBackgrounds(); // <<-- E AQUI TAMBÉM
+      }
     };
   }
 }

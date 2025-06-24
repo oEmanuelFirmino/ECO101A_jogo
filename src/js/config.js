@@ -68,3 +68,10 @@ export const phaseConfigs = [
      enemyTypes: ["final_boss"],
    },
 ];
+export function linkPhaseBackgrounds() {
+  if (images.background1) phaseConfigs[0].bg = images.background1;
+  if (images.background2) phaseConfigs[1].bg = images.background2;
+  if (images.background3) phaseConfigs[2].bg = images.background3;
+  if (images.background4) phaseConfigs[3].bg = images.background4;
+  if (images.background5) phaseConfigs[4].bg = images.background5;
+}
