@@ -1,10 +1,13 @@
 // src/js/main.js
 
+
+
+import { drawHUD, showEndScreen, showNarrativeScreen } from './ui.js';
 import { ctx, VIEWPORT_WIDTH, VIEWPORT_HEIGHT, MAP_WIDTH, MAP_HEIGHT, PLAYABLE_AREA_BORDER, assetSources, images, phaseConfigs } from './config.js';
 import { gameState, resetGameState } from './gameState.js';
 import { Player } from './entities.js';
 import { isColliding, spawnEnemy, spawnItem, setupPhase, checkPhaseCompletion, updateCamera } from './gameLogic.js';
-import { drawHUD, showEndScreen } from './ui.js';
+//import { drawHUD, showEndScreen } from './ui.js';
 import {  linkPhaseBackgrounds } from './config.js';
 
 // --- Elementos da UI ---
@@ -152,19 +155,29 @@ function init() {
   messageScreen.classList.add("hidden");
   pauseMenu.classList.add("hidden");
   gameState.player = new Player(MAP_WIDTH / 2, MAP_HEIGHT - PLAYABLE_AREA_BORDER - 60, 40, 60, 4, images.player_frente);
-  setupPhase(0);
-  if (!isGameLoopRunning) {
-      isGameLoopRunning = true;
-      requestAnimationFrame(gameLoop);
-  }
 }
-
 function startGame() {
     startMenu.classList.add('hidden');
     hud.classList.remove('hidden');
     gameContainer.classList.remove('hidden');
     playMusicOnFirstInteraction();
+    
+    // Prepara o jogo, mas não inicia o loop ainda
     init();
+    
+    // Mostra a introdução da história primeiro
+    showNarrativeScreen(
+      "A Lenda da Masmorra de Fogo",
+      "Reza a lenda que um grande tesouro se esconde nas profundezas de uma masmorra esquecida, no coração de uma montanha de fogo. Muitos tentaram... todos falharam. Você ousa entrar?",
+      () => {
+        // Quando o jogador clica em "Continuar", a primeira fase começa
+        setupPhase(0);
+        if (!isGameLoopRunning) {
+            isGameLoopRunning = true;
+            requestAnimationFrame(gameLoop);
+        }
+      }
+    );
 }
 
 function togglePause() {

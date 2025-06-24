@@ -3,8 +3,29 @@
 import { gameState } from './gameState.js';
 import { phaseConfigs, images, MAP_WIDTH, MAP_HEIGHT, PLAYABLE_AREA_BORDER, VIEWPORT_WIDTH, VIEWPORT_HEIGHT } from './config.js';
 import { Enemy, DynamicEnemy, FinalBoss, Item, Portal } from './entities.js';
-import { showEndScreen } from './ui.js';
+// import { showEndScreen } from './ui.js';
+import { showNarrativeScreen, showEndScreen } from './ui.js';
 
+
+// Substitua o objeto 'narrativeTexts' por este array
+const narrativeTexts = [
+  { // Posição 0: Texto para iniciar a Fase 2
+    title: "Um Eco nas Profundezas",
+    subtitle: "Você sobreviveu à primeira horda. Um calor estranho emana das paredes de rocha você segue em direção a entrada da masmorra."
+  },
+  { // Posição 1: Texto para iniciar a Fase 3
+    title: "O Ar se Torna Rarefeito",
+    subtitle: "Inimigos mais fortes surgem das sombras. O ar fica denso e a escuridão parece querer te engolir. O tesouro deve estar perto."
+  },
+  { // Posição 2: Texto para iniciar a Fase 4
+    title: "O Coração do Vulcão",
+    subtitle: "O chão treme sob seus pés! Cinzas caem do teto e rios de lava brilham ao longe. A masmorra é o interior de um vulcão adormecido!"
+  },
+  { // Posição 3: Texto para iniciar a Fase 5 (Chefe)
+    title: "O Guardião Ancestral",
+    subtitle: "Você chegou à câmara final. O tesouro está à vista, mas uma criatura colossal, forjada em fogo e rocha, desperta para protegê-lo."
+  }
+];
 export function isColliding(rect1, rect2) {
     if (!rect1 || !rect2) return false;
     return (rect1.x < rect2.x + rect2.width && rect1.x + rect1.width > rect2.x && rect1.y < rect2.y + rect2.height && rect1.y + rect1.height > rect2.y);
@@ -81,20 +102,32 @@ export function setupPhase(phaseIndex) {
 }
 
 export function checkPhaseCompletion() {
-    const config = phaseConfigs[gameState.phase]; 
+    const config = phaseConfigs[gameState.phase ]; 
     if (!config) return;
     
     let completed = false;
-    if (config.objectiveType === "survive") { const timeElapsed = (Date.now() - gameState.phaseStartTime) / 1000; if (timeElapsed >= config.duration) completed = true; }
-    else if (config.objectiveType === "defeat") { if (gameState.score >= config.killTarget) completed = true; }
-    else if (config.objectiveType === "reach_portal") { if (gameState.portal && isColliding(gameState.player, gameState.portal)) completed = true; }
-    else if (config.objectiveType === "defeat_boss") { 
+    if (config.objectiveType === "survive") { 
+        const timeElapsed = (Date.now() - gameState.phaseStartTime) / 1000; 
+        if (timeElapsed >= config.duration) completed = true; 
+    } else if (config.objectiveType === "defeat") { 
+        if (gameState.score >= config.killTarget) completed = true; 
+    } else if (config.objectiveType === "reach_portal") { 
+        if (gameState.portal && isColliding(gameState.player, gameState.portal)) completed = true; 
+    } else if (config.objectiveType === "defeat_boss") { 
         if (gameState.enemies.length === 0 && gameState.phaseStartTime > 0) completed = true; 
     }
 
     if (completed) {
-        if (gameState.phase + 1 < phaseConfigs.length) { 
-            setupPhase(gameState.phase + 1); 
+        const nextPhase = gameState.phase + 1;
+        if (nextPhase < phaseConfigs.length) { 
+            const story = narrativeTexts[gameState.phase];
+            if (story) {
+                showNarrativeScreen(story.title, story.subtitle, () => {
+                    setupPhase(nextPhase); 
+                });
+            } else {
+                setupPhase(nextPhase);
+            }
         } else { 
             gameState.isGameOver = true; 
             showEndScreen(true);

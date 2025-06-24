@@ -224,6 +224,7 @@ export class DynamicEnemy extends Enemy {
   }
 }
 
+// Substitua sua classe FinalBoss inteira por esta
 export class FinalBoss extends Enemy {
   constructor(x, y, width, height, speed, sprite, health, damage) {
     super(x, y, width, height, speed, sprite, health, damage);
@@ -232,48 +233,90 @@ export class FinalBoss extends Enemy {
     this.stateTimer = 0;
     this.lastAttackTime = Date.now();
   }
+
   update(player) {
-    this.stateTimer -= 1000 / 60;
-    if (this.stateTimer <= 0) { this.chooseNextState(player); }
+    this.stateTimer -= 1000 / 60; // Reduz o timer do estado atual
+
+    if (this.stateTimer <= 0) {
+      this.chooseNextState(player); // Escolhe um novo estado se o tempo acabou
+    }
+
+    // Lógica de movimento para o estado 'charging'
     if (this.state === 'charging' && player) {
-      const dx = player.x - this.x;
-      const dy = player.y - this.y;
-      const distance = Math.sqrt(dx * dx + dy * dy);
-      if (distance > 1) { this.x += (dx / distance) * (this.speed * 2.5); this.y += (dy / distance) * (this.speed * 2.5); }
+        const dx = player.x - this.x;
+        const dy = player.y - this.y;
+        const distance = Math.sqrt(dx * dx + dy * dy);
+        if (distance > 1) { 
+          this.x += (dx / distance) * (this.speed * 2.5); 
+          this.y += (dy / distance) * (this.speed * 2.5); 
+        }
     }
   }
+
   chooseNextState(player) {
-    if (!player) { this.state = 'idle'; return; }
+    if (!player) { 
+      this.state = 'idle'; 
+      return; 
+    }
+
     const now = Date.now();
-    if (now - this.lastAttackTime < 2000) { this.state = 'idle'; return; }
+    // Cooldown de 2 segundos entre os ataques
+    if (now - this.lastAttackTime < 2000) {
+      this.state = 'idle';
+      return;
+    }
+
     const healthPercent = this.health / this.maxHealth;
     const availableStates = ['charging', 'shooting'];
-    if (healthPercent <= 0.5) { availableStates.push('summoning'); }
+    if (healthPercent <= 0.5) { 
+      availableStates.push('summoning'); 
+    }
+
     const nextState = availableStates[Math.floor(Math.random() * availableStates.length)];
     this.state = nextState;
     this.lastAttackTime = now;
+
+    // Executa a ação e define o timer para o próximo estado
     switch (nextState) {
-      case 'charging': this.stateTimer = 1500; break;
-      case 'shooting': this.shootAtPlayer(player); this.stateTimer = 1000; break;
-      case 'summoning': this.summonMinions(); this.stateTimer = 2000; break;
+      case 'charging': 
+        this.stateTimer = 1500; 
+        break;
+      case 'shooting': 
+        this.shootAtPlayer(player); 
+        this.stateTimer = 1000; 
+        break;
+      case 'summoning': 
+        this.summonMinions(); 
+        this.stateTimer = 2000; 
+        break;
+      default:
+        this.stateTimer = 500; // Tempo para o estado 'idle'
+        break;
     }
   }
+
   shootAtPlayer(player) {
     if (!player) return;
-    const projSpeed = 5; const numProjectiles = 5; const angleStep = Math.PI / 16;
-    const dx = player.x - this.x; const dy = player.y - this.y;
+    const projSpeed = 5; 
+    const numProjectiles = 5; 
+    const angleStep = Math.PI / 16;
+    const dx = player.x - this.x; 
+    const dy = player.y - this.y;
     const centralAngle = Math.atan2(dy, dx);
+
     for (let i = 0; i < numProjectiles; i++) {
-      const angle = centralAngle - (angleStep * (numProjectiles - 1) / 2) + (i * angleStep);
-      const vx = Math.cos(angle) * projSpeed; const vy = Math.sin(angle) * projSpeed;
-      gameState.enemyProjectiles.push(new EnemyProjectile(this.x + this.width / 2, this.y + this.height / 2, 15, 15, images.enemyProjectile, vx, vy, 20));
+        const angle = centralAngle - (angleStep * (numProjectiles - 1) / 2) + (i * angleStep);
+        const vx = Math.cos(angle) * projSpeed; 
+        const vy = Math.sin(angle) * projSpeed;
+        gameState.enemyProjectiles.push(new EnemyProjectile(this.x + this.width / 2, this.y + this.height / 2, 15, 15, images.enemyProjectile, vx, vy, 20));
     }
   }
+
   summonMinions() {
     for (let i = 0; i < 2; i++) {
-      const spawnX = this.x + (Math.random() - 0.5) * 200;
-      const spawnY = this.y + (Math.random() - 0.5) * 200;
-      gameState.enemies.push(new Enemy(spawnX, spawnY, 35, 35, 2.5, images.fastEnemy, 20, 50));
+        const spawnX = this.x + (Math.random() - 0.5) * 200;
+        const spawnY = this.y + (Math.random() - 0.5) * 200;
+        gameState.enemies.push(new Enemy(spawnX, spawnY, 35, 35, 2.5, images.fastEnemy, 20, 50));
     }
   }
 }
