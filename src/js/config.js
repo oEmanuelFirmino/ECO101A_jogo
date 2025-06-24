@@ -21,7 +21,7 @@ export const PLAYABLE_AREA_BORDER = 100;
 export const assetSources = {
   pistol: './images/pistol.png',
   gun: "./images/gun.png",
-  projectile: "https://placehold.co/10x10/f1c40f/FFFFFF?text=",
+  projectile: "./images/bullet.png",
   enemyProjectile: "https://placehold.co/15x15/ff4136/FFFFFF?text=",
   enemy: "https://placehold.co/40x40/e74c3c/FFFFFF?text=E",
   fastEnemy: "./images/bat1.png",

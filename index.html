@@ -7,58 +7,62 @@
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=VT323&display=swap" rel="stylesheet" />
-  
+
   <link rel="stylesheet" href="./src/css/main.css" />
 
-</head>
-<body>
+  </head>
 
-  <div id="game-wrapper">
+  <body>
 
-    <div id="start-menu">
-      <h1 id="game-title">Aventura na Masmorra</h1>
-      <p id="game-subtitle">Pressione o botão para iniciar sua jornada.</p>
-      <button id="start-button">Iniciar Jogo</button>
-    </div>
+    <div id="game-wrapper">
 
-    <div id="hud" class="hidden">
-      <div class="hud-top">
-        <div id="player-health-container">
-          <div id="player-health-bar"></div>
+      <div id="start-menu">
+        <h1 id="game-title">Aventura na Masmorra</h1>
+        <p id="game-subtitle">Pressione o botão para iniciar sua jornada.</p>
+        <button id="start-button">Iniciar Jogo</button>
+      </div>
+
+      <div id="hud" class="hidden">
+        <div class="hud-top">
+          <div id="player-health-container">
+            <div id="player-health-bar"></div>
+            <span id="player-health-text">100</span>
+          </div>
+
+          <div class="hud-stats">
+            <p>Fase: <span id="phase-text">1</span></p>
+            <p>Pontos: <span id="score-text">0</span></p>
+          </div>
+
+          <button id="pause-button">Pause</button>
         </div>
-        <div class="hud-stats">
-          <p>Vida: <span id="health-text">100</span></p>
-          <p>Fase: <span id="phase-text">1</span></p>
-          <p>Pontos: <span id="score-text">0</span></p>
+        <div class="hud-bottom">
+          <p id="objective-text"></p>
         </div>
-        <button id="pause-button">Pause</button>
-      </div>
-      <div class="hud-bottom">
-        <p id="objective-text"></p>
-      </div>
-    </div>
-
-    <div id="game-container" class="hidden">
-      <canvas id="gameCanvas" width="800" height="600"></canvas>
-      
-      <div id="boss-health-container" class="hidden">
-        <div id="boss-health-bar"></div>
-      </div>
-      
-      <div id="pause-menu" class="hidden">
-        <h1 id="pause-title">Pausado</h1>
-        <button id="resume-button">Continuar</button>
-        <button id="restart-pause-button">Reiniciar</button>
       </div>
 
-      <div id="message-screen" class="hidden">
-        <h1 id="message-title"></h1>
-        <p id="message-subtitle"></p>
-        <button id="restart-button">Reiniciar</button>
+      <div id="game-container" class="hidden">
+        <canvas id="gameCanvas" width="800" height="600"></canvas>
+
+        <div id="boss-health-container" class="hidden">
+          <div id="boss-health-bar"></div>
+        </div>
+
+        <div id="pause-menu" class="hidden">
+          <h1 id="pause-title">Pausado</h1>
+          <button id="resume-button">Continuar</button>
+          <button id="restart-pause-button">Reiniciar</button>
+        </div>
+
+        <div id="message-screen" class="hidden">
+          <h1 id="message-title"></h1>
+          <p id="message-subtitle"></p>
+          <button id="restart-button">Reiniciar</button>
+        </div>
       </div>
-    </div>
-    
-  </div> <audio id="game-soundtrack" loop></audio>
-  <script type="module" src="./src/js/main.js"></script>
-</body>
+
+    </div> <audio id="game-soundtrack" loop></audio>
+    <script type="module" src="./src/js/main.js"></script>
+  </body>
+
 </html>

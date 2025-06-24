@@ -14,8 +14,8 @@ export function drawHUD() {
     playerHealthBar.style.width = `${playerHealthPercent}%`;
   }
   
-  // Atualiza o texto da vida
-  const healthText = document.getElementById("health-text");
+  // Atualiza o texto da vida sobre a barra
+  const healthText = document.getElementById("player-health-text"); // <<< Mude o ID aqui
   if (healthText) {
     healthText.textContent = gameState.player.health;
   }
@@ -27,7 +27,7 @@ export function drawHUD() {
   const config = phaseConfigs[gameState.phase];
   if (!config) return;
 
-  // Atualiza o texto do objetivo
+
   const objectiveText = document.getElementById("objective-text");
   if (config.objectiveType === "survive") {
     const timeElapsed = (Date.now() - gameState.phaseStartTime) / 1000;

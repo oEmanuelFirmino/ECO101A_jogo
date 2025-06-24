@@ -28,19 +28,68 @@ body {
 }
 
 /* HUD (Interface) */
-#hud {
-  padding: 10px;
-  background-color: #111;
-  border-bottom: 2px solid #4a4a4a;
-  color: #fff;
-  text-shadow: 1px 1px 2px black;
+.hud-top { 
+  display: flex; 
+  justify-content: space-between; /* Mantém o espaço entre os itens */
+  align-items: center; /* Alinha verticalmente */
+  gap: 15px; /* Adiciona um espaço entre os elementos */
 }
-.hud-top { display: flex; justify-content: space-between; align-items: center; }
+
 .hud-bottom { margin-top: 8px; text-align: center; }
-.hud-stats { display: flex; align-items: center; gap: 20px; }
+
+.hud-stats { 
+  display: flex; /* Os stats (fase e pontos) continuam flexíveis */
+  align-items: center; 
+  gap: 20px; 
+  flex-grow: 1; /* Permite que ele ocupe o espaço disponível */
+  justify-content: center; /* Centraliza Fase e Pontos */
+}
+
 #hud p { margin: 0; font-size: 16px; }
 #objective-text { color: #ffc107; font-size: 18px; }
-#pause-button { font-family: "Press Start 2P"; font-size: 12px; cursor: pointer; border-radius: 5px; border: 2px solid white; background: #666; color: white; padding: 8px 12px;}
+#pause-button { 
+  font-family: "Press Start 2P"; 
+  font-size: 12px; 
+  cursor: pointer; 
+  border-radius: 5px; 
+  border: 2px solid white; 
+  background: #666; 
+  color: white; 
+  padding: 8px 12px;
+  /* Garante que o botão não encolha */
+  flex-shrink: 0; 
+}
+
+/* --- ESTILOS DA BARRA DE VIDA (GARANTA QUE ESTEJAM AQUI) --- */
+#player-health-container {
+  position: relative;
+  width: 180px; /* Largura fixa */
+  height: 22px; /* Altura fixa */
+  background-color: #555;
+  border: 2px solid #222;
+  border-radius: 5px;
+  display: flex;
+  align-items: center;
+  /* Garante que a barra não encolha */
+  flex-shrink: 0; 
+}
+
+#player-health-bar {
+  height: 100%;
+  background-color: #28a745;
+  border-radius: 3px;
+  transition: width 0.3s ease-in-out;
+}
+
+#player-health-text {
+  position: absolute;
+  width: 100%;
+  text-align: center;
+  color: white;
+  font-size: 14px;
+  font-weight: bold;
+  text-shadow: 1px 1px 1px black;
+}
 
 /* Contêiner do Jogo e Canvas */
 #game-container { position: relative; }
