@@ -50,7 +50,7 @@ export function spawnEnemy(type = null) {
             const bossY = PLAYABLE_AREA_BORDER + 100;
             gameState.enemies.push(new FinalBoss(bossX, bossY, 180, 180, 1, images.finalBoss, 2500, 100));
             break;
-        default: gameState.enemies.push(new DynamicEnemy(x, y, 55, 55, 1.5, { up: images.enemy, down: images.enemy, left: images.enemy, right: images.enemy }, 40, 25)); break;
+        default: gameState.enemies.push(new DynamicEnemy(x, y, 55, 55, 1.5, { up: images.normal_costas, down: images.normal_frente, left: images.normal_esquerda, right: images.normal_direita }, 40, 25)); break;
     }
 }
 
