@@ -48,11 +48,11 @@ export const assetSources = {
 export const images = {};
 
 export const phaseConfigs = [
-  { objectiveType: "survive", duration: 4, objectiveText: "Sobreviva por 40 segundos!", maxEnemies: 5, spawnInterval: 3000, enemyTypes: ["normal", "fast"], },
+  { objectiveType: "survive", duration: 40, objectiveText: "Sobreviva por 40 segundos!", maxEnemies: 5, spawnInterval: 3000, enemyTypes: ["normal", "fast"], },
   { objectiveType: "defeat", killTarget: 5, objectiveText: "Derrote 15 inimigos!", maxEnemies: 7, spawnInterval: 2500, enemyTypes: ["normal", "fast"], },
   {
     objectiveType: "survive",
-    duration: 5,
+    duration: 30,
     objectiveText: "Sobreviva na caverna escura!",
     maxEnemies: 10,
     spawnInterval: 2500,
@@ -61,9 +61,9 @@ export const phaseConfigs = [
   },
   {
     objectiveType: "survive",
-    duration: 6,
+    duration: 35,
     objectiveText: "Sobreviva ao calor infernal!",
-    maxEnemies: 10,
+    maxEnemies: 15,
     spawnInterval: 2000,
     enemyTypes: ["fast", "tank"],
   },
