@@ -49,7 +49,7 @@ export function spawnEnemy(type = null) {
         case "final_boss": 
             const bossX = MAP_WIDTH / 2 - 60;
             const bossY = PLAYABLE_AREA_BORDER + 100;
-            gameState.enemies.push(new FinalBoss(bossX, bossY, 120, 120, 1.5, images.finalBoss, 2500, 100)); 
+            gameState.enemies.push(new FinalBoss(bossX, bossY, 120, 120, 1.2, images.finalBoss, 2500, 100));    
             break;
         default: gameState.enemies.push(new Enemy(x, y, 40, 40, 1.5, images.enemy, 40, 25)); break;
     }

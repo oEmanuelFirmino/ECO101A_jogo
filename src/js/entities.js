@@ -224,24 +224,26 @@ export class DynamicEnemy extends Enemy {
   }
 }
 
-// Substitua sua classe FinalBoss inteira por esta
+// Substitua sua classe FinalBoss inteira por esta versão corrigida
+
 export class FinalBoss extends Enemy {
   constructor(x, y, width, height, speed, sprite, health, damage) {
     super(x, y, width, height, speed, sprite, health, damage);
     this.maxHealth = health;
-    this.state = 'idle';
-    this.stateTimer = 0;
-    this.lastAttackTime = Date.now();
+    this.state = 'idle'; // Começa no estado passivo
+    this.stateTimer = 1000; // Começa com um timer para não atacar imediatamente
+    this.lastAttackTime = 0; // Permite o primeiro ataque sem cooldown
   }
 
   update(player) {
     this.stateTimer -= 1000 / 60; // Reduz o timer do estado atual
 
+    // Se o timer do estado atual acabou, escolhe um novo estado
     if (this.stateTimer <= 0) {
-      this.chooseNextState(player); // Escolhe um novo estado se o tempo acabou
+      this.chooseNextState(player);
     }
 
-    // Lógica de movimento para o estado 'charging'
+    // Lógica de movimento para o estado de investida ('charging')
     if (this.state === 'charging' && player) {
         const dx = player.x - this.x;
         const dy = player.y - this.y;
@@ -253,48 +255,50 @@ export class FinalBoss extends Enemy {
     }
   }
 
+  // A função de decisão, agora corrigida
   chooseNextState(player) {
-    if (!player) { 
-      this.state = 'idle'; 
-      return; 
+    if (!player) {
+        this.state = 'idle';
+        this.stateTimer = 500;
+        return;
     }
 
     const now = Date.now();
-    // Cooldown de 2 segundos entre os ataques
+    // Se ainda estiver no cooldown de 2 segundos entre ataques...
     if (now - this.lastAttackTime < 2000) {
-      this.state = 'idle';
-      return;
+        this.state = 'idle'; // ... fica no estado passivo.
+        this.stateTimer = 500; // ... e define um pequeno timer para esperar antes de tentar de novo.
+        return; // Sai da função e não escolhe um novo ataque.
     }
 
+    // Se o cooldown acabou, escolhe um novo ataque
     const healthPercent = this.health / this.maxHealth;
     const availableStates = ['charging', 'shooting'];
-    if (healthPercent <= 0.5) { 
-      availableStates.push('summoning'); 
+    if (healthPercent <= 0.5) {
+        availableStates.push('summoning');
     }
 
     const nextState = availableStates[Math.floor(Math.random() * availableStates.length)];
     this.state = nextState;
-    this.lastAttackTime = now;
+    this.lastAttackTime = now; // Reinicia o timer do cooldown do ataque
 
-    // Executa a ação e define o timer para o próximo estado
+    // Executa a ação e define a duração do estado atual
     switch (nextState) {
-      case 'charging': 
-        this.stateTimer = 1500; 
-        break;
-      case 'shooting': 
-        this.shootAtPlayer(player); 
-        this.stateTimer = 1000; 
-        break;
-      case 'summoning': 
-        this.summonMinions(); 
-        this.stateTimer = 2000; 
-        break;
-      default:
-        this.stateTimer = 500; // Tempo para o estado 'idle'
-        break;
+        case 'charging':
+            this.stateTimer = 1500; // Duração da investida
+            break;
+        case 'shooting':
+            this.shootAtPlayer(player);
+            this.stateTimer = 1000; // Duração do estado de tiro
+            break;
+        case 'summoning':
+            this.summonMinions();
+            this.stateTimer = 2000; // Duração do estado de invocação
+            break;
     }
   }
 
+  // Função para atirar (sem alterações)
   shootAtPlayer(player) {
     if (!player) return;
     const projSpeed = 5; 
@@ -312,6 +316,7 @@ export class FinalBoss extends Enemy {
     }
   }
 
+  // Função para invocar inimigos (sem alterações)
   summonMinions() {
     for (let i = 0; i < 2; i++) {
         const spawnX = this.x + (Math.random() - 0.5) * 200;
@@ -324,13 +329,11 @@ export class FinalBoss extends Enemy {
 
 export class Projectile extends Character {
     constructor(x, y, hitboxWidth, hitboxHeight, visualWidth, visualHeight, sprite, vx, vy, direction) {
-        // O erro estava na linha abaixo. 'height' foi trocado por 'hitboxHeight'.
-        super(x, y, hitboxWidth, hitboxHeight, 0, sprite); // <<< CORREÇÃO AQUI
-        
-        this.visualWidth = visualWidth;
-        this.visualHeight = visualHeight;
+        super(x, y, hitboxWidth, hitboxHeight, 0, sprite);
         this.vx = vx;
         this.vy = vy;
+        this.visualWidth = visualWidth;
+        this.visualHeight = visualHeight;
         this.direction = direction;
     }
 
@@ -349,10 +352,13 @@ export class Projectile extends Character {
         ctx.translate(centerX, centerY);
 
         let angle = 0;
-        switch (this.direction) {
-            case 'up':    angle = -Math.PI / 2; break;
-            case 'down':  angle = Math.PI / 2;  break;
-            case 'left':  angle = Math.PI;      break;
+        // A rotação só se aplica se houver uma direção (como no projétil do jogador)
+        if (this.direction) {
+            switch (this.direction) {
+                case 'up':    angle = -Math.PI / 2; break;
+                case 'down':  angle = Math.PI / 2;  break;
+                case 'left':  angle = Math.PI;      break;
+            }
         }
         ctx.rotate(angle);
 
@@ -363,11 +369,12 @@ export class Projectile extends Character {
 }
 
 export class EnemyProjectile extends Projectile {
-  constructor(x, y, width, height, sprite, vx, vy, damage) {
-    super(x, y, width, height, sprite, vx, vy);
-    this.damage = damage;
+    constructor(x, y, width, height, sprite, vx, vy, damage) {
+        
+        super(x, y, width, height, width, height, sprite, vx, vy, null);
+        this.damage = damage;
+    }
   }
-}
 export class Item extends Character {
   constructor(x, y, width, height, sprite, effect) { super(x, y, width, height, 0, sprite); this.effect = effect; }
 }

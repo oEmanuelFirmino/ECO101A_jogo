@@ -161,6 +161,7 @@ function draw() {
   gameState.enemies.forEach((enemy) => enemy && enemy.draw(ctx));
   gameState.projectiles.forEach((p) => p && p.draw(ctx));
   gameState.enemyProjectiles.forEach((p) => p && p.draw(ctx));
+  gameState.enemyProjectiles.forEach((p) => p && p.draw(ctx));
   ctx.restore();
   if (config.hasFog && gameState.player) {
       drawVisionLimiter();
