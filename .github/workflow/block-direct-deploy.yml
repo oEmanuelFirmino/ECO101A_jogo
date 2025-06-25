@@ -1,0 +1,16 @@
+name: 🚫 Block Direct Push to Deploy
+
+on:
+  push:
+    branches:
+      - deploy
+
+jobs:
+  prevent-direct-deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Fail if direct push to deploy
+        run: |
+          echo "❌ Push direto na branch 'deploy' não é permitido."
+          echo "✅ Use Pull Requests e siga o fluxo de revisão."
+          exit 1
