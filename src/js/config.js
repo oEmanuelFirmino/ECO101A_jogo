@@ -69,7 +69,7 @@ export const phaseConfigs = [
     objectiveText: "Sobreviva por 40 segundos!",
     maxEnemies: 5,
     spawnInterval: 3000,
-    enemyTypes: ["normal", "fast", "larva"],
+    enemyTypes: ["normal", "fast"],
   },
   {
     objectiveType: "defeat",
