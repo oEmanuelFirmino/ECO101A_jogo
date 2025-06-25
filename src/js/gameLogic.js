@@ -41,7 +41,8 @@ export function spawnEnemy(type = null) {
 
     switch (enemyTypeKey) {
         case "fast": gameState.enemies.push(new Enemy(x, y, 35, 35, 2.5, images.fastEnemy, 20, 50)); break;
-        case "tank": gameState.enemies.push(new DynamicEnemy(x, y, 50, 50, 1, { up: images.golem_costas, down: images.golem_frente, left: images.golem_esquerda, right: images.golem_direita }, 80, 75)); break;
+        case "golem": gameState.enemies.push(new DynamicEnemy(x, y, 50, 50, 1.5, { up: images.golem_costas, down: images.golem_frente, left: images.golem_esquerda, right: images.golem_direita }, 80, 75)); break;
+        case "tank": gameState.enemies.push(new Enemy(x, y, 35, 35, 1, images.tank, 110, 15)); break;
         case "final_boss":
             const bossX = MAP_WIDTH / 2 - 60;
             const bossY = PLAYABLE_AREA_BORDER + 100;
