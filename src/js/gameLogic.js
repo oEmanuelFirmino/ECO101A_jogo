@@ -1,29 +1,25 @@
-// NO TOPO do arquivo gameLogic.js, coloque APENAS este bloco de importações:
-
 import { gameState } from './gameState.js';
 import { phaseConfigs, images, MAP_WIDTH, MAP_HEIGHT, PLAYABLE_AREA_BORDER, VIEWPORT_WIDTH, VIEWPORT_HEIGHT } from './config.js';
 import { Enemy, DynamicEnemy, FinalBoss, Item, Portal, LavaPool } from './entities.js';
 import { showNarrativeScreen, showEndScreen } from './ui.js';
 
-// ... o resto do seu código (const narrativeTexts = [...], etc.)
-// Substitua o objeto 'narrativeTexts' por este array
 const narrativeTexts = [
-  { // Posição 0: Texto para iniciar a Fase 2
-    title: "Um Eco nas Profundezas",
-    subtitle: "Você sobreviveu à primeira horda. Um calor estranho emana das paredes de rocha você segue em direção a entrada da masmorra."
-  },
-  { // Posição 1: Texto para iniciar a Fase 3
-    title: "O Ar se Torna Rarefeito",
-    subtitle: "Inimigos mais fortes surgem das sombras. O ar fica denso e a escuridão parece querer te engolir. O tesouro deve estar perto."
-  },
-  { // Posição 2: Texto para iniciar a Fase 4
-    title: "O Coração do Vulcão",
-    subtitle: "O chão treme sob seus pés! Cinzas caem do teto e rios de lava brilham ao longe. A masmorra é o interior de um vulcão adormecido!"
-  },
-  { // Posição 3: Texto para iniciar a Fase 5 (Chefe)
-    title: "O Guardião Ancestral",
-    subtitle: "Você chegou à câmara final. O tesouro está à vista, mas uma criatura colossal, forjada em fogo e rocha, desperta para protegê-lo."
-  }
+    {
+        title: "Um Eco nas Profundezas",
+        subtitle: "Você sobreviveu à primeira horda. Um calor estranho emana das paredes de rocha você segue em direção a entrada da masmorra."
+    },
+    {
+        title: "O Ar se Torna Rarefeito",
+        subtitle: "Inimigos mais fortes surgem das sombras. O ar fica denso e a escuridão parece querer te engolir. O tesouro deve estar perto."
+    },
+    {
+        title: "O Coração do Vulcão",
+        subtitle: "O chão treme sob seus pés! Cinzas caem do teto e rios de lava brilham ao longe. A masmorra é o interior de um vulcão adormecido!"
+    },
+    {
+        title: "O Guardião Ancestral",
+        subtitle: "Você chegou à câmara final. O tesouro está à vista, mas uma criatura colossal, forjada em fogo e rocha, desperta para protegê-lo."
+    }
 ];
 export function isColliding(rect1, rect2) {
     if (!rect1 || !rect2) return false;
@@ -35,7 +31,7 @@ export function spawnEnemy(type = null) {
     if (!config || !config.enemyTypes) return;
 
     const enemyTypeKey = type || config.enemyTypes[Math.floor(Math.random() * config.enemyTypes.length)];
-    
+
     let x, y;
     const side = Math.floor(Math.random() * 4);
     if (side === 0) { x = Math.random() * MAP_WIDTH; y = -50; }
@@ -46,10 +42,10 @@ export function spawnEnemy(type = null) {
     switch (enemyTypeKey) {
         case "fast": gameState.enemies.push(new Enemy(x, y, 35, 35, 2.5, images.fastEnemy, 20, 50)); break;
         case "tank": gameState.enemies.push(new DynamicEnemy(x, y, 50, 50, 1, { up: images.golem_costas, down: images.golem_frente, left: images.golem_esquerda, right: images.golem_direita }, 80, 75)); break;
-        case "final_boss": 
+        case "final_boss":
             const bossX = MAP_WIDTH / 2 - 60;
             const bossY = PLAYABLE_AREA_BORDER + 100;
-            gameState.enemies.push(new FinalBoss(bossX, bossY, 120, 120, 1.2, images.finalBoss, 2500, 100));    
+            gameState.enemies.push(new FinalBoss(bossX, bossY, 120, 120, 1.5, images.finalBoss, 2500, 100));
             break;
         default: gameState.enemies.push(new Enemy(x, y, 40, 40, 1.5, images.enemy, 40, 25)); break;
     }
@@ -70,11 +66,9 @@ export function spawnItem() {
     }
 }
 
-// Substitua a função setupPhase inteira
 export function setupPhase(phaseIndex) {
     if (!phaseConfigs[phaseIndex]) return;
 
-    // Limpa o estado da fase anterior
     Object.assign(gameState, {
         phase: phaseIndex,
         enemies: [],
@@ -82,7 +76,7 @@ export function setupPhase(phaseIndex) {
         projectiles: [],
         enemyProjectiles: [],
         portal: null,
-        lavaPools: [], // Limpa as poças de lava
+        lavaPools: [],
         phaseStartTime: Date.now(),
         lastEnemySpawnTime: 0,
     });
@@ -90,7 +84,7 @@ export function setupPhase(phaseIndex) {
     const config = phaseConfigs[phaseIndex];
     document.getElementById("objective-text").textContent = `Objetivo: ${config.objectiveText}`;
 
-    // Lógica para o chefe
+
     const bossHealthContainer = document.getElementById("boss-health-container");
     if (config.objectiveType === "defeat_boss") {
         bossHealthContainer.classList.remove("hidden");
@@ -99,52 +93,50 @@ export function setupPhase(phaseIndex) {
         bossHealthContainer.classList.add("hidden");
     }
 
-    // <<< LÓGICA PARA CRIAR AS POÇAS DE LAVA >>>
-    // Apenas na fase 4 (índice 3)
     if (phaseIndex === 3) {
-    const poolLocations = [
-        { x: 200, y: 300, radius: 50 },
-        { x: 800, y: 250, radius: 70 },
-        { x: 400, y: 700, radius: 60 },
-        { x: 750, y: 800, radius: 40 },
-        { x: 400, y: 400, radius: 60 },
-    ];
+        const poolLocations = [
+            { x: 200, y: 300, radius: 50 },
+            { x: 800, y: 250, radius: 70 },
+            { x: 400, y: 700, radius: 60 },
+            { x: 750, y: 800, radius: 40 },
+            { x: 400, y: 400, radius: 60 },
+        ];
 
-    poolLocations.forEach(p => {
-        gameState.lavaPools.push(new LavaPool(p.x, p.y, p.radius));
-    });
-}
+        poolLocations.forEach(p => {
+            gameState.lavaPools.push(new LavaPool(p.x, p.y, p.radius));
+        });
+    }
 }
 
 export function checkPhaseCompletion() {
-    const config = phaseConfigs[gameState.phase ]; 
+    const config = phaseConfigs[gameState.phase];
     if (!config) return;
-    
+
     let completed = false;
-    if (config.objectiveType === "survive") { 
-        const timeElapsed = (Date.now() - gameState.phaseStartTime) / 1000; 
-        if (timeElapsed >= config.duration) completed = true; 
-    } else if (config.objectiveType === "defeat") { 
-        if (gameState.score >= config.killTarget) completed = true; 
-    } else if (config.objectiveType === "reach_portal") { 
-        if (gameState.portal && isColliding(gameState.player, gameState.portal)) completed = true; 
-    } else if (config.objectiveType === "defeat_boss") { 
-        if (gameState.enemies.length === 0 && gameState.phaseStartTime > 0) completed = true; 
+    if (config.objectiveType === "survive") {
+        const timeElapsed = (Date.now() - gameState.phaseStartTime) / 1000;
+        if (timeElapsed >= config.duration) completed = true;
+    } else if (config.objectiveType === "defeat") {
+        if (gameState.score >= config.killTarget) completed = true;
+    } else if (config.objectiveType === "reach_portal") {
+        if (gameState.portal && isColliding(gameState.player, gameState.portal)) completed = true;
+    } else if (config.objectiveType === "defeat_boss") {
+        if (gameState.enemies.length === 0 && gameState.phaseStartTime > 0) completed = true;
     }
 
     if (completed) {
         const nextPhase = gameState.phase + 1;
-        if (nextPhase < phaseConfigs.length) { 
+        if (nextPhase < phaseConfigs.length) {
             const story = narrativeTexts[gameState.phase];
             if (story) {
                 showNarrativeScreen(story.title, story.subtitle, () => {
-                    setupPhase(nextPhase); 
+                    setupPhase(nextPhase);
                 });
             } else {
                 setupPhase(nextPhase);
             }
-        } else { 
-            gameState.isGameOver = true; 
+        } else {
+            gameState.isGameOver = true;
             showEndScreen(true);
         }
     }

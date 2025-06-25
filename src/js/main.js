@@ -1,16 +1,11 @@
-// src/js/main.js
-
-
-
 import { drawHUD, showEndScreen, showNarrativeScreen } from './ui.js';
 import { ctx, VIEWPORT_WIDTH, VIEWPORT_HEIGHT, MAP_WIDTH, MAP_HEIGHT, PLAYABLE_AREA_BORDER, assetSources, images, phaseConfigs } from './config.js';
 import { gameState, resetGameState } from './gameState.js';
 import { Player } from './entities.js';
 import { isColliding, spawnEnemy, spawnItem, setupPhase, checkPhaseCompletion, updateCamera } from './gameLogic.js';
-//import { drawHUD, showEndScreen } from './ui.js';
-import {  linkPhaseBackgrounds } from './config.js';
+import { linkPhaseBackgrounds } from './config.js';
 let lastLavaDamageTime = 0;
-// --- Elementos da UI ---
+
 const startMenu = document.getElementById("start-menu");
 const pauseMenu = document.getElementById("pause-menu");
 const hud = document.getElementById("hud");
@@ -22,15 +17,12 @@ const resumeButton = document.getElementById("resume-button");
 const restartPauseButton = document.getElementById("restart-pause-button");
 const restartEndButton = document.getElementById("restart-button");
 
-// --- Lógica Principal do Jogo ---
 function applyPlayerDamage(damageAmount) {
-    if (!gameState.player || gameState.isPlayerInvincible) return;
-    gameState.player.takeDamage(damageAmount);
-    gameState.isPlayerInvincible = true;
-    setTimeout(() => { gameState.isPlayerInvincible = false; }, 1000);
+  if (!gameState.player || gameState.isPlayerInvincible) return;
+  gameState.player.takeDamage(damageAmount);
+  gameState.isPlayerInvincible = true;
+  setTimeout(() => { gameState.isPlayerInvincible = false; }, 1000);
 }
-
-// Substitua sua função update inteira por esta em main.js
 
 function update() {
   if (gameState.isGameOver || !gameState.player) return;
@@ -40,21 +32,18 @@ function update() {
   updateCamera();
   const config = phaseConfigs[gameState.phase];
 
-  // Lógica de spawn de inimigos
   if (config.objectiveType !== "defeat_boss" && config.spawnInterval) {
-    if (now - gameState.lastEnemySpawnTime > config.spawnInterval && gameState.enemies.length < config.maxEnemies) { 
-      spawnEnemy(); 
-      gameState.lastEnemySpawnTime = now; 
+    if (now - gameState.lastEnemySpawnTime > config.spawnInterval && gameState.enemies.length < config.maxEnemies) {
+      spawnEnemy();
+      gameState.lastEnemySpawnTime = now;
     }
   }
 
-  // Lógica de spawn de itens
-  if (now - gameState.lastItemSpawnTime > gameState.itemSpawnInterval && gameState.items.length < 3) { 
-    spawnItem(); 
-    gameState.lastItemSpawnTime = now; 
+  if (now - gameState.lastItemSpawnTime > gameState.itemSpawnInterval && gameState.items.length < 3) {
+    spawnItem();
+    gameState.lastItemSpawnTime = now;
   }
 
-  // Atualiza projéteis do jogador
   for (let i = gameState.projectiles.length - 1; i >= 0; i--) {
     const p = gameState.projectiles[i];
     if (!p) continue;
@@ -64,20 +53,18 @@ function update() {
     }
   }
 
-  // Atualiza projéteis dos inimigos
   for (let i = gameState.enemyProjectiles.length - 1; i >= 0; i--) {
     const p = gameState.enemyProjectiles[i];
     if (!p) continue;
     p.update();
     if (isColliding(gameState.player, p)) {
-        applyPlayerDamage(p.damage);
-        gameState.enemyProjectiles.splice(i, 1);
+      applyPlayerDamage(p.damage);
+      gameState.enemyProjectiles.splice(i, 1);
     } else if (p.y + p.height < 0 || p.y > MAP_HEIGHT || p.x + p.width < 0 || p.x > MAP_WIDTH) {
-        gameState.enemyProjectiles.splice(i, 1);
+      gameState.enemyProjectiles.splice(i, 1);
     }
   }
 
-  // Atualiza inimigos e checa colisão com projéteis do jogador
   for (let i = gameState.enemies.length - 1; i >= 0; i--) {
     const enemy = gameState.enemies[i];
     if (!enemy) continue;
@@ -92,57 +79,53 @@ function update() {
         gameState.projectiles.splice(j, 1);
         if (enemy.takeDamage(20)) {
           gameState.enemies.splice(i, 1);
-          if (config.objectiveType === "defeat") { 
-            gameState.score++; 
+          if (config.objectiveType === "defeat") {
+            gameState.score++;
           }
-          break; 
+          break;
         }
       }
     }
   }
 
-  // Checa colisão do jogador com itens
   for (let i = gameState.items.length - 1; i >= 0; i--) {
     const item = gameState.items[i];
     if (!item) continue;
-    if (isColliding(gameState.player, item)) { 
-      gameState.player.applyEffect(item.effect); 
-      gameState.items.splice(i, 1); 
-    } 
+    if (isColliding(gameState.player, item)) {
+      gameState.player.applyEffect(item.effect);
+      gameState.items.splice(i, 1);
+    }
   }
 
-  // --- LÓGICA DA LAVA ---
-  // Atualiza a animação de cada poça de lava
   gameState.lavaPools.forEach(pool => pool.update());
 
-  // Lógica de dano da lava
   for (const pool of gameState.lavaPools) {
-      if (isColliding(gameState.player, pool)) {
-          const now = Date.now();
-          // Causa dano a cada 700ms se o jogador estiver na lava
-          if (now - lastLavaDamageTime > 700) {
-              gameState.player.takeDamage(pool.damage);
-              lastLavaDamageTime = now;
-          }
-          break; // Sai do loop se já encontrou uma colisão
+    if (isColliding(gameState.player, pool)) {
+      const now = Date.now();
+
+      if (now - lastLavaDamageTime > 700) {
+        gameState.player.takeDamage(pool.damage);
+        lastLavaDamageTime = now;
       }
+      break;
+    }
   }
-  
+
   if (gameState.portal) gameState.portal.update();
   checkPhaseCompletion();
 }
 function drawVisionLimiter() {
-    if (!gameState.player) return;
-    const player = gameState.player;
-    const playerViewX = player.x - gameState.camera.x + player.width / 2;
-    const playerViewY = player.y - gameState.camera.y + player.height / 2;
-    const outerRadius = Math.max(VIEWPORT_WIDTH, VIEWPORT_HEIGHT) / 1.5;
-    const gradient = ctx.createRadialGradient(playerViewX, playerViewY, 100, playerViewX, playerViewY, outerRadius);
-    gradient.addColorStop(0, 'rgba(0, 0, 0, 0.4)'); 
-    gradient.addColorStop(0.5, 'rgba(0, 0, 0, 0.85)');
-    gradient.addColorStop(1, 'rgba(0, 0, 0, 1)');
-    ctx.fillStyle = gradient;
-    ctx.fillRect(0, 0, VIEWPORT_WIDTH, VIEWPORT_HEIGHT);
+  if (!gameState.player) return;
+  const player = gameState.player;
+  const playerViewX = player.x - gameState.camera.x + player.width / 2;
+  const playerViewY = player.y - gameState.camera.y + player.height / 2;
+  const outerRadius = Math.max(VIEWPORT_WIDTH, VIEWPORT_HEIGHT) / 1.5;
+  const gradient = ctx.createRadialGradient(playerViewX, playerViewY, 100, playerViewX, playerViewY, outerRadius);
+  gradient.addColorStop(0, 'rgba(0, 0, 0, 0.4)');
+  gradient.addColorStop(0.5, 'rgba(0, 0, 0, 0.85)');
+  gradient.addColorStop(1, 'rgba(0, 0, 0, 1)');
+  ctx.fillStyle = gradient;
+  ctx.fillRect(0, 0, VIEWPORT_WIDTH, VIEWPORT_HEIGHT);
 }
 
 function draw() {
@@ -154,7 +137,7 @@ function draw() {
   if (bgImage && bgImage.complete && bgImage.naturalWidth !== 0) {
     ctx.drawImage(bgImage, 0, 0, MAP_WIDTH, MAP_HEIGHT);
   }
-   gameState.lavaPools.forEach((pool) => pool && pool.draw(ctx));
+  gameState.lavaPools.forEach((pool) => pool && pool.draw(ctx));
   if (gameState.portal) gameState.portal.draw(ctx);
   if (gameState.player) gameState.player.draw(ctx);
   gameState.items.forEach((item) => item && item.draw(ctx));
@@ -164,11 +147,10 @@ function draw() {
   gameState.enemyProjectiles.forEach((p) => p && p.draw(ctx));
   ctx.restore();
   if (config.hasFog && gameState.player) {
-      drawVisionLimiter();
+    drawVisionLimiter();
   }
 }
 
-// --- Game Loop e Funções de Controle de Estado ---
 let isGameLoopRunning = false;
 function gameLoop() {
   if (gameState.isGameOver) {
@@ -191,46 +173,44 @@ function init() {
   gameState.player = new Player(MAP_WIDTH / 2, MAP_HEIGHT - PLAYABLE_AREA_BORDER - 60, 40, 60, 4, images.player_frente);
 }
 function startGame() {
-    startMenu.classList.add('hidden');
-    hud.classList.remove('hidden');
-    gameContainer.classList.remove('hidden');
-    playMusicOnFirstInteraction();
-    
-    // Prepara o jogo, mas não inicia o loop ainda
-    init();
-    
-    // Mostra a introdução da história primeiro
-    showNarrativeScreen(
-      "A Lenda da Masmorra de Fogo",
-      "Reza a lenda que um grande tesouro se esconde nas profundezas de uma masmorra esquecida, no coração de uma montanha de fogo. Muitos tentaram... todos falharam. Você ousa entrar?",
-      () => {
-        // Quando o jogador clica em "Continuar", a primeira fase começa
-        setupPhase(0);
-        if (!isGameLoopRunning) {
-            isGameLoopRunning = true;
-            requestAnimationFrame(gameLoop);
-        }
+  startMenu.classList.add('hidden');
+  hud.classList.remove('hidden');
+  gameContainer.classList.remove('hidden');
+  playMusicOnFirstInteraction();
+
+  init();
+
+  showNarrativeScreen(
+    "A Lenda da Masmorra de Fogo",
+    "Reza a lenda que um grande tesouro se esconde nas profundezas de uma masmorra esquecida, no coração de uma montanha de fogo. Muitos tentaram... todos falharam. Você ousa entrar?",
+    () => {
+
+      setupPhase(0);
+      if (!isGameLoopRunning) {
+        isGameLoopRunning = true;
+        requestAnimationFrame(gameLoop);
       }
-    );
+    }
+  );
 }
 
 function togglePause() {
-    if (gameState.isGameOver || gameContainer.classList.contains('hidden')) return;
-    gameState.isPaused = !gameState.isPaused;
-    if (gameState.isPaused) {
-        pauseMenu.classList.remove('hidden');
-    } else {
-        pauseMenu.classList.add('hidden');
-    }
+  if (gameState.isGameOver || gameContainer.classList.contains('hidden')) return;
+  gameState.isPaused = !gameState.isPaused;
+  if (gameState.isPaused) {
+    pauseMenu.classList.remove('hidden');
+  } else {
+    pauseMenu.classList.add('hidden');
+  }
 }
 
 function returnToStartMenu() {
-    isGameLoopRunning = false;
-    hud.classList.add('hidden');
-    gameContainer.classList.add('hidden');
-    pauseMenu.classList.add('hidden');
-    messageScreen.classList.add('hidden');
-    startMenu.classList.remove('hidden');
+  isGameLoopRunning = false;
+  hud.classList.add('hidden');
+  gameContainer.classList.add('hidden');
+  pauseMenu.classList.add('hidden');
+  messageScreen.classList.add('hidden');
+  startMenu.classList.remove('hidden');
 }
 
 function playMusicOnFirstInteraction() {
@@ -244,7 +224,7 @@ function loadAssets() {
   let loaded = 0;
   const total = Object.keys(assetSources).length;
   if (total === 0) {
-    linkPhaseBackgrounds(); // Chame mesmo se não houver assets
+    linkPhaseBackgrounds();
     return;
   }
   for (let key in assetSources) {
@@ -254,7 +234,7 @@ function loadAssets() {
       loaded++;
       if (loaded === total) {
         console.log("Assets carregados. Jogo pronto para iniciar.");
-        linkPhaseBackgrounds(); // <<-- CHAME A FUNÇÃO AQUI
+        linkPhaseBackgrounds();
       }
     };
     images[key].onerror = () => {
@@ -262,27 +242,32 @@ function loadAssets() {
       console.error(`Falha ao carregar o asset: ${key}`);
       if (loaded === total) {
         console.log("Assets carregados com alguns erros.");
-        linkPhaseBackgrounds(); // <<-- E AQUI TAMBÉM
+        linkPhaseBackgrounds();
       }
     };
   }
 }
 
-// --- EVENT LISTENERS ---
 startButton.addEventListener("click", startGame);
 pauseButton.addEventListener("click", togglePause);
 resumeButton.addEventListener("click", togglePause);
 restartPauseButton.addEventListener("click", returnToStartMenu);
 restartEndButton.addEventListener("click", returnToStartMenu);
 
-window.addEventListener("keydown", (e) => { 
+window.addEventListener("keydown", (e) => {
+  const key = e.key.toLowerCase();
+
+  if (key === "escape") {
+    togglePause();
+  }
+
   if (gameState && gameState.keysPressed && !gameState.isPaused) {
-    gameState.keysPressed[e.key.toLowerCase()] = true;
+    gameState.keysPressed[key] = true;
   }
 });
-window.addEventListener("keyup", (e) => { 
+window.addEventListener("keyup", (e) => {
   if (gameState && gameState.keysPressed) {
-    gameState.keysPressed[e.key.toLowerCase()] = false; 
+    gameState.keysPressed[e.key.toLowerCase()] = false;
   }
 });
 

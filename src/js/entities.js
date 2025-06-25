@@ -1,5 +1,3 @@
-// src/js/entities.js
-
 import { gameState } from './gameState.js';
 import { images, MAP_WIDTH, PLAYABLE_AREA_BORDER, MAP_HEIGHT } from './config.js';
 
@@ -53,54 +51,50 @@ export class Player extends Character {
     }
   }
 
-  // Dentro da classe Player
-shoot(direction) {
+  shoot(direction) {
     this.direction = direction;
     let projX, projY, vx = 0, vy = 0;
     const projSpeed = 8;
-    
-    // <<< EXPERIMENTE COM ESTES VALORES! >>>
-    // Tamanho do projétil na tela (visual)
-    const visualWidth = 45; // Era o tamanho da imagem, agora é 25px
-    const visualHeight = 41; // Proporcional à imagem da bala
 
-    // Tamanho da área de colisão (hitbox)
+    const visualWidth = 45;
+    const visualHeight = 41;
+
+
     const hitboxWidth = 20;
     const hitboxHeight = 8;
 
-    // Ajusta a posição de saída do projétil
     switch (direction) {
-      case "up": 
-        projX = this.x + this.width / 2 - hitboxWidth / 2; 
-        projY = this.y - hitboxHeight; 
-        vy = -projSpeed; 
+      case "up":
+        projX = this.x + this.width / 2 - hitboxWidth / 2;
+        projY = this.y - hitboxHeight;
+        vy = -projSpeed;
         break;
-      case "down": 
-        projX = this.x + this.width / 2 - hitboxWidth / 2; 
-        projY = this.y + this.height; 
-        vy = projSpeed; 
+      case "down":
+        projX = this.x + this.width / 2 - hitboxWidth / 2;
+        projY = this.y + this.height;
+        vy = projSpeed;
         break;
-      case "left": 
-        projX = this.x - hitboxWidth; 
-        projY = this.y + this.height / 2 - hitboxHeight / 2; 
-        vx = -projSpeed; 
+      case "left":
+        projX = this.x - hitboxWidth;
+        projY = this.y + this.height / 2 - hitboxHeight / 2;
+        vx = -projSpeed;
         break;
-      case "right": 
-        projX = this.x + this.width; 
-        projY = this.y + this.height / 2 - hitboxHeight / 2; 
-        vx = projSpeed; 
+      case "right":
+        projX = this.x + this.width;
+        projY = this.y + this.height / 2 - hitboxHeight / 2;
+        vx = projSpeed;
         break;
     }
 
     if (vx !== 0 || vy !== 0) {
-      // <<< Passamos os 4 valores de tamanho para o novo projétil >>>
+
       gameState.projectiles.push(
         new Projectile(projX, projY, hitboxWidth, hitboxHeight, visualWidth, visualHeight, images.projectile, vx, vy, direction)
       );
       gameState.canShoot = false;
       setTimeout(() => { gameState.canShoot = true; }, gameState.shootCooldown);
     }
-}
+  }
 
   takeDamage(amount) {
     if (!this.isShielded) {
@@ -224,47 +218,42 @@ export class DynamicEnemy extends Enemy {
   }
 }
 
-// Substitua sua classe FinalBoss inteira por esta versão corrigida
-
 export class FinalBoss extends Enemy {
   constructor(x, y, width, height, speed, sprite, health, damage) {
     super(x, y, width, height, speed, sprite, health, damage);
     this.maxHealth = health;
-    this.state = 'idle'; // Começa no estado passivo
-    this.stateTimer = 1000; // Começa com um timer para não atacar imediatamente
-    this.lastAttackTime = 0; // Permite o primeiro ataque sem cooldown
+    this.state = 'idle'; 
+    this.stateTimer = 1000; 
+    this.lastAttackTime = 0; 
   }
 
   update(player) {
-    this.stateTimer -= 1000 / 60; // Reduz o timer do estado atual
+    this.stateTimer -= 1000 / 60;
 
-    // Se o timer do estado atual acabou, escolhe um novo estado
     if (this.stateTimer <= 0) {
       this.chooseNextState(player);
     }
 
-    // Lógica de movimento para o estado de investida ('charging')
     if (this.state === 'charging' && player) {
-        const dx = player.x - this.x;
-        const dy = player.y - this.y;
-        const distance = Math.sqrt(dx * dx + dy * dy);
-        if (distance > 1) { 
-          this.x += (dx / distance) * (this.speed * 2.5); 
-          this.y += (dy / distance) * (this.speed * 2.5); 
-        }
+      const dx = player.x - this.x;
+      const dy = player.y - this.y;
+      const distance = Math.sqrt(dx * dx + dy * dy);
+      if (distance > 1) {
+        this.x += (dx / distance) * (this.speed * 2.5);
+        this.y += (dy / distance) * (this.speed * 2.5);
+      }
     }
   }
 
   // A função de decisão, agora corrigida
   chooseNextState(player) {
     if (!player) {
-        this.state = 'idle';
-        this.stateTimer = 500;
-        return;
+      this.state = 'idle';
+      return;
     }
 
     const now = Date.now();
-    // Se ainda estiver no cooldown de 2 segundos entre ataques...
+
     if (now - this.lastAttackTime < 2000) {
         this.state = 'idle'; // ... fica no estado passivo.
         this.stateTimer = 500; // ... e define um pequeno timer para esperar antes de tentar de novo.
@@ -275,14 +264,13 @@ export class FinalBoss extends Enemy {
     const healthPercent = this.health / this.maxHealth;
     const availableStates = ['charging', 'shooting'];
     if (healthPercent <= 0.5) {
-        availableStates.push('summoning');
+      availableStates.push('summoning');
     }
 
     const nextState = availableStates[Math.floor(Math.random() * availableStates.length)];
     this.state = nextState;
     this.lastAttackTime = now; // Reinicia o timer do cooldown do ataque
 
-    // Executa a ação e define a duração do estado atual
     switch (nextState) {
         case 'charging':
             this.stateTimer = 1500; // Duração da investida
@@ -301,31 +289,30 @@ export class FinalBoss extends Enemy {
   // Função para atirar (sem alterações)
   shootAtPlayer(player) {
     if (!player) return;
-    const projSpeed = 5; 
-    const numProjectiles = 5; 
+    const projSpeed = 5;
+    const numProjectiles = 5;
     const angleStep = Math.PI / 16;
-    const dx = player.x - this.x; 
+    const dx = player.x - this.x;
     const dy = player.y - this.y;
     const centralAngle = Math.atan2(dy, dx);
 
     for (let i = 0; i < numProjectiles; i++) {
-        const angle = centralAngle - (angleStep * (numProjectiles - 1) / 2) + (i * angleStep);
-        const vx = Math.cos(angle) * projSpeed; 
-        const vy = Math.sin(angle) * projSpeed;
-        gameState.enemyProjectiles.push(new EnemyProjectile(this.x + this.width / 2, this.y + this.height / 2, 15, 15, images.enemyProjectile, vx, vy, 20));
+      const angle = centralAngle - (angleStep * (numProjectiles - 1) / 2) + (i * angleStep);
+      const vx = Math.cos(angle) * projSpeed;
+      const vy = Math.sin(angle) * projSpeed;
+      gameState.enemyProjectiles.push(new EnemyProjectile(this.x + this.width / 2, this.y + this.height / 2, 15, 15, images.enemyProjectile, vx, vy, 20));
     }
   }
 
   // Função para invocar inimigos (sem alterações)
   summonMinions() {
     for (let i = 0; i < 2; i++) {
-        const spawnX = this.x + (Math.random() - 0.5) * 200;
-        const spawnY = this.y + (Math.random() - 0.5) * 200;
-        gameState.enemies.push(new Enemy(spawnX, spawnY, 35, 35, 2.5, images.fastEnemy, 20, 50));
+      const spawnX = this.x + (Math.random() - 0.5) * 200;
+      const spawnY = this.y + (Math.random() - 0.5) * 200;
+      gameState.enemies.push(new Enemy(spawnX, spawnY, 35, 35, 2.5, images.fastEnemy, 20, 50));
     }
   }
 }
-
 
 export class Projectile extends Character {
     constructor(x, y, hitboxWidth, hitboxHeight, visualWidth, visualHeight, sprite, vx, vy, direction) {
@@ -337,35 +324,32 @@ export class Projectile extends Character {
         this.direction = direction;
     }
 
-    update() { 
-        this.x += this.vx; 
-        this.y += this.vy; 
+  update() {
+    this.x += this.vx;
+    this.y += this.vy;
+  }
+
+  draw(ctx) {
+    if (!this.sprite || !this.sprite.complete || this.sprite.naturalWidth === 0) return;
+
+    const centerX = this.x + this.width / 2;
+    const centerY = this.y + this.height / 2;
+
+    ctx.save();
+    ctx.translate(centerX, centerY);
+
+    let angle = 0;
+    switch (this.direction) {
+      case 'up': angle = -Math.PI / 2; break;
+      case 'down': angle = Math.PI / 2; break;
+      case 'left': angle = Math.PI; break;
     }
+    ctx.rotate(angle);
 
-    draw(ctx) {
-        if (!this.sprite || !this.sprite.complete || this.sprite.naturalWidth === 0) return;
+    ctx.drawImage(this.sprite, -this.visualWidth / 2, -this.visualHeight / 2, this.visualWidth, this.visualHeight);
 
-        const centerX = this.x + this.width / 2;
-        const centerY = this.y + this.height / 2;
-        
-        ctx.save();
-        ctx.translate(centerX, centerY);
-
-        let angle = 0;
-        // A rotação só se aplica se houver uma direção (como no projétil do jogador)
-        if (this.direction) {
-            switch (this.direction) {
-                case 'up':    angle = -Math.PI / 2; break;
-                case 'down':  angle = Math.PI / 2;  break;
-                case 'left':  angle = Math.PI;      break;
-            }
-        }
-        ctx.rotate(angle);
-
-        ctx.drawImage(this.sprite, -this.visualWidth / 2, -this.visualHeight / 2, this.visualWidth, this.visualHeight);
-
-        ctx.restore();
-    }
+    ctx.restore();
+  }
 }
 
 export class EnemyProjectile extends Projectile {
@@ -390,74 +374,67 @@ export class Portal extends Character {
   }
 }
 
-// Substitua a classe LavaPool inteira por esta versão aprimorada
 export class LavaPool extends Character {
-    constructor(x, y, radius) {
-        super(x - radius, y - radius, radius * 2, radius * 2, 0, null);
-        this.radius = radius;
-        this.damage = 10;
-        this.animationTimer = Math.random() * 2000; // Timer principal para a pulsação
-        this.bubbles = []; // Array para guardar as bolhas de lava
+  constructor(x, y, radius) {
+    super(x - radius, y - radius, radius * 2, radius * 2, 0, null);
+    this.radius = radius;
+    this.damage = 10;
+    this.animationTimer = Math.random() * 2000;
+    this.bubbles = [];
+  }
+
+
+  update() {
+    this.animationTimer += 16;
+
+
+    for (let i = this.bubbles.length - 1; i >= 0; i--) {
+      this.bubbles[i].lifetime--;
+      if (this.bubbles[i].lifetime <= 0) {
+        this.bubbles.splice(i, 1);
+      }
     }
 
-    // A poça de lava agora tem sua própria lógica de atualização para as animações
-    update() {
-        this.animationTimer += 16; // Avança o timer da animação
-
-        // Atualiza as bolhas existentes
-        for (let i = this.bubbles.length - 1; i >= 0; i--) {
-            this.bubbles[i].lifetime--;
-            if (this.bubbles[i].lifetime <= 0) {
-                this.bubbles.splice(i, 1);
-            }
-        }
-
-        // Cria novas bolhas aleatoriamente
-        if (Math.random() < 0.1) {
-            const size = Math.random() * 5 + 2; // Tamanho da bolha
-            const angle = Math.random() * Math.PI * 2;
-            const dist = Math.random() * (this.radius * 0.6); // Distância do centro
-            this.bubbles.push({
-                x: (this.x + this.radius) + Math.cos(angle) * dist,
-                y: (this.y + this.radius) + Math.sin(angle) * dist,
-                size: size,
-                lifetime: Math.random() * 60 + 30, // Tempo de vida da bolha
-                maxLifetime: 60,
-            });
-        }
+    if (Math.random() < 0.1) {
+      const size = Math.random() * 5 + 2;
+      const angle = Math.random() * Math.PI * 2;
+      const dist = Math.random() * (this.radius * 0.6);
+      this.bubbles.push({
+        x: (this.x + this.radius) + Math.cos(angle) * dist,
+        y: (this.y + this.radius) + Math.sin(angle) * dist,
+        size: size,
+        lifetime: Math.random() * 60 + 30,
+        maxLifetime: 60,
+      });
     }
+  }
 
-    // A nova função de desenho, muito mais detalhada
-    draw(ctx) {
-        // --- 1. Desenha as camadas principais da lava ---
-        const pulseOuter = Math.sin(this.animationTimer / 400) * 0.1 + 0.9; // Pulso lento para a borda
-        const pulseInner = Math.sin(this.animationTimer / 250) * 0.15 + 0.85; // Pulso rápido para o centro
+  draw(ctx) {
 
-        // Camada externa (vermelho escuro)
-        ctx.fillStyle = "rgba(200, 50, 0, 0.4)";
-        ctx.beginPath();
-        ctx.arc(this.x + this.radius, this.y + this.radius, this.radius * pulseOuter, 0, Math.PI * 2);
-        ctx.fill();
+    const pulseOuter = Math.sin(this.animationTimer / 400) * 0.1 + 0.9;
+    const pulseInner = Math.sin(this.animationTimer / 250) * 0.15 + 0.85;
 
-        // Camada do meio (laranja)
-        ctx.fillStyle = "rgba(255, 100, 0, 0.6)";
-        ctx.beginPath();
-        ctx.arc(this.x + this.radius, this.y + this.radius, this.radius * 0.7 * pulseOuter, 0, Math.PI * 2);
-        ctx.fill();
+    ctx.fillStyle = "rgba(200, 50, 0, 0.4)";
+    ctx.beginPath();
+    ctx.arc(this.x + this.radius, this.y + this.radius, this.radius * pulseOuter, 0, Math.PI * 2);
+    ctx.fill();
 
-        // Camada central (amarelo)
-        ctx.fillStyle = "rgba(255, 200, 0, 0.8)";
-        ctx.beginPath();
-        ctx.arc(this.x + this.radius, this.y + this.radius, this.radius * 0.4 * pulseInner, 0, Math.PI * 2);
-        ctx.fill();
-        
-        // --- 2. Desenha as bolhas de lava ---
-        this.bubbles.forEach(bubble => {
-            const lifePercent = bubble.lifetime / bubble.maxLifetime;
-            ctx.fillStyle = `rgba(255, 220, 100, ${lifePercent * 0.9})`;
-            ctx.beginPath();
-            ctx.arc(bubble.x, bubble.y, bubble.size * lifePercent, 0, Math.PI * 2);
-            ctx.fill();
-        });
-    }
+    ctx.fillStyle = "rgba(255, 100, 0, 0.6)";
+    ctx.beginPath();
+    ctx.arc(this.x + this.radius, this.y + this.radius, this.radius * 0.7 * pulseOuter, 0, Math.PI * 2);
+    ctx.fill();
+
+    ctx.fillStyle = "rgba(255, 200, 0, 0.8)";
+    ctx.beginPath();
+    ctx.arc(this.x + this.radius, this.y + this.radius, this.radius * 0.4 * pulseInner, 0, Math.PI * 2);
+    ctx.fill();
+
+    this.bubbles.forEach(bubble => {
+      const lifePercent = bubble.lifetime / bubble.maxLifetime;
+      ctx.fillStyle = `rgba(255, 220, 100, ${lifePercent * 0.9})`;
+      ctx.beginPath();
+      ctx.arc(bubble.x, bubble.y, bubble.size * lifePercent, 0, Math.PI * 2);
+      ctx.fill();
+    });
+  }
 }

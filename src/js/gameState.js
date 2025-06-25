@@ -1,5 +1,3 @@
-// src/js/gameState.js
-
 let gameState = {
   player: null,
   enemies: [],
