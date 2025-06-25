@@ -1,0 +1,39 @@
+name: ✅ Enforce PR Flow: branch_criada -> develop -> deploy
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+
+jobs:
+  check-pr-flow:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Validate PR source and target branches
+        run: |
+          echo "🔎 Validando fluxo da Pull Request..."
+          
+          SOURCE_BRANCH="${{ github.head_ref }}"
+          TARGET_BRANCH="${{ github.base_ref }}"
+
+          echo "➡️ Origem: $SOURCE_BRANCH"
+          echo "➡️ Destino: $TARGET_BRANCH"
+
+          # Bloqueio: Qualquer PR indo para 'deploy' que não venha de 'develop'
+          if [[ "$TARGET_BRANCH" == "deploy" && "$SOURCE_BRANCH" != "develop" ]]; then
+            echo "❌ PR inválida: Apenas PRs de 'develop' podem ir para 'deploy'."
+            exit 1
+          fi
+
+          # Bloqueio: Qualquer PR indo para 'develop' que venha diretamente de 'deploy' (ciclo reverso indevido)
+          if [[ "$TARGET_BRANCH" == "develop" && "$SOURCE_BRANCH" == "deploy" ]]; then
+            echo "❌ PR inválida: Não pode fazer PR de 'deploy' para 'develop'."
+            exit 1
+          fi
+
+          # Bloqueio: PRs indo direto de branch_criada para deploy
+          if [[ "$TARGET_BRANCH" == "deploy" && "$SOURCE_BRANCH" != "develop" ]]; then
+            echo "❌ PR inválida: Fluxo correto é: branch_criada -> develop -> deploy."
+            exit 1
+          fi
+
+          echo "✅ Fluxo de PR validado com sucesso."

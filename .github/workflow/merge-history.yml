@@ -1,0 +1,46 @@
+name: ✅ Block PRs to Deploy Without Develop Merge
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+    branches:
+      - deploy
+
+jobs:
+  check-merge-lineage:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check if source branch has merge from develop
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          echo "🔎 Validando histórico de merge para PR em 'deploy'..."
+
+          REPO="${{ github.repository }}"
+          SOURCE_BRANCH="${{ github.head_ref }}"
+          TARGET_BRANCH="${{ github.base_ref }}"
+
+          echo "➡️ Origem: $SOURCE_BRANCH"
+          echo "➡️ Destino: $TARGET_BRANCH"
+
+          # Buscar os últimos 100 commits da source branch
+          COMMITS=$(curl -s -H "Authorization: Bearer $GITHUB_TOKEN" \
+            "https://api.github.com/repos/$REPO/commits?sha=$SOURCE_BRANCH&per_page=100")
+
+          # Verificar se algum commit tem 'Merge pull request' vindo de 'develop'
+          FOUND=0
+          echo "$COMMITS" | jq -r '.[] | .commit.message' | while read -r COMMIT_MSG; do
+            if [[ "$COMMIT_MSG" == *"Merge pull request"* && "$COMMIT_MSG" == *"develop"* ]]; then
+              echo "✅ Merge válido encontrado no histórico: $COMMIT_MSG"
+              FOUND=1
+              break
+            fi
+          done
+
+          if [[ $FOUND -eq 0 ]]; then
+            echo "❌ Nenhum merge de 'develop' encontrado no histórico da branch '$SOURCE_BRANCH'."
+            echo "🚫 PR bloqueada: O fluxo correto é: branch_criada ➡️ develop ➡️ deploy."
+            exit 1
+          fi
+
+          echo "✅ Validação de histórico de merge concluída com sucesso."
