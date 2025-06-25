@@ -49,7 +49,7 @@ export const images = {};
 
 export const phaseConfigs = [
   { objectiveType: "survive", duration: 40, objectiveText: "Sobreviva por 40 segundos!", maxEnemies: 5, spawnInterval: 3000, enemyTypes: ["normal", "fast"], },
-  { objectiveType: "defeat", killTarget: 5, objectiveText: "Derrote 15 inimigos!", maxEnemies: 7, spawnInterval: 2500, enemyTypes: ["normal", "fast"], },
+  { objectiveType: "defeat", killTarget: 15, objectiveText: "Derrote 15 inimigos!", maxEnemies: 7, spawnInterval: 2500, enemyTypes: ["normal", "fast"], },
   {
     objectiveType: "survive",
     duration: 30,

@@ -254,8 +254,14 @@ restartPauseButton.addEventListener("click", returnToStartMenu);
 restartEndButton.addEventListener("click", returnToStartMenu);
 
 window.addEventListener("keydown", (e) => {
+  const key = e.key.toLowerCase();
+
+  if (key === "escape") {
+    togglePause();
+  }
+
   if (gameState && gameState.keysPressed && !gameState.isPaused) {
-    gameState.keysPressed[e.key.toLowerCase()] = true;
+    gameState.keysPressed[key] = true;
   }
 });
 window.addEventListener("keyup", (e) => {
