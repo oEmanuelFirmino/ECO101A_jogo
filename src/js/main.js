@@ -6,16 +6,20 @@ import { isColliding, spawnEnemy, spawnItem, setupPhase, checkPhaseCompletion, u
 import { linkPhaseBackgrounds } from './config.js';
 let lastLavaDamageTime = 0;
 
+// --- VARIÁVEIS DOS ELEMENTOS HTML ---
 const startMenu = document.getElementById("start-menu");
 const pauseMenu = document.getElementById("pause-menu");
 const hud = document.getElementById("hud");
 const gameContainer = document.getElementById("game-container");
+const controlsScreen = document.getElementById("controls-screen"); // Variável para o novo ecrã
 const messageScreen = document.getElementById("message-screen");
 const pauseButton = document.getElementById("pause-button");
 const startButton = document.getElementById("start-button");
 const resumeButton = document.getElementById("resume-button");
 const restartPauseButton = document.getElementById("restart-pause-button");
 const restartEndButton = document.getElementById("restart-button");
+const startFromControlsButton = document.getElementById("start-from-controls-button"); // Variável para o novo botão
+
 
 function applyPlayerDamage(damageAmount) {
   if (!gameState.player || gameState.isPlayerInvincible) return;
@@ -171,27 +175,35 @@ function init() {
   pauseMenu.classList.add("hidden");
   gameState.player = new Player(MAP_WIDTH / 2, MAP_HEIGHT - PLAYABLE_AREA_BORDER - 60, 40, 60, 4, images.player_frente);
 }
+
+
 function startGame() {
   startMenu.classList.add('hidden');
-  hud.classList.remove('hidden');
-  gameContainer.classList.remove('hidden');
+  controlsScreen.classList.remove('hidden'); // Mostra o ecrã de controlos
   playMusicOnFirstInteraction();
-
-  init();
-
-  showNarrativeScreen(
-    "A Lenda da Masmorra de Fogo",
-    "Reza a lenda que um grande tesouro se esconde nas profundezas de uma masmorra esquecida, no coração de uma montanha de fogo. Muitos tentaram... todos falharam. Você ousa entrar?",
-    () => {
-
-      setupPhase(0);
-      if (!isGameLoopRunning) {
-        isGameLoopRunning = true;
-        requestAnimationFrame(gameLoop);
-      }
-    }
-  );
 }
+
+
+function runGame() {
+    controlsScreen.classList.add('hidden');
+    hud.classList.remove('hidden');
+    gameContainer.classList.remove('hidden');
+  
+    init();
+  
+    showNarrativeScreen(
+      "A Lenda da Masmorra de Fogo",
+      "Reza a lenda que um grande tesouro se esconde nas profundezas de uma masmorra esquecida, no coração de uma montanha de fogo. Muitos tentaram... todos falharam. Você ousa entrar?",
+      () => {
+        setupPhase(0);
+        if (!isGameLoopRunning) {
+          isGameLoopRunning = true;
+          requestAnimationFrame(gameLoop);
+        }
+      }
+    );
+}
+
 
 function togglePause() {
   if (gameState.isGameOver || gameContainer.classList.contains('hidden')) return;
@@ -214,14 +226,11 @@ function returnToStartMenu() {
 
 function playMusicOnFirstInteraction() {
   const soundtrack = document.getElementById("game-soundtrack");
-  if (soundtrack && soundtrack.src) {    
-    if (soundtrack.paused) {      
+  if (soundtrack && soundtrack.src) {
+    if (soundtrack.paused) {
       const playPromise = soundtrack.play();
       if (playPromise !== undefined) {
-        playPromise.then(_ => {
-          console.log("Música tocando.");
-        })
-        .catch(error => {
+        playPromise.catch(error => {
           console.error("Falha na reprodução da música:", error);
         });
       }
@@ -230,7 +239,6 @@ function playMusicOnFirstInteraction() {
     console.error("Elemento de áudio ou 'src' da trilha sonora não encontrado!");
   }
 }
-
 
 function loadAssets() {
   let loaded = 0;
@@ -260,15 +268,40 @@ function loadAssets() {
   }
 }
 
+
+
 startButton.addEventListener("click", startGame);
+startFromControlsButton.addEventListener("click", runGame); 
 pauseButton.addEventListener("click", togglePause);
 resumeButton.addEventListener("click", togglePause);
 restartPauseButton.addEventListener("click", returnToStartMenu);
 restartEndButton.addEventListener("click", returnToStartMenu);
 
+
+
 window.addEventListener("keydown", (e) => {
   const key = e.key.toLowerCase();
+  
+ 
+  if (e.code === 'Space') {
+    e.preventDefault(); 
 
+   
+    if (!startMenu.classList.contains('hidden')) {
+      startButton.click();
+    } else if (!controlsScreen.classList.contains('hidden')) {
+      startFromControlsButton.click();
+    } else if (!pauseMenu.classList.contains('hidden')) {
+      resumeButton.click();
+    } else if (!messageScreen.classList.contains('hidden')) {
+      const visibleButton = messageScreen.querySelector('button:not(.hidden)');
+      if (visibleButton) {
+        visibleButton.click();
+      }
+    }
+  }
+
+  
   if (key === "escape") {
     togglePause();
   }
@@ -277,10 +310,13 @@ window.addEventListener("keydown", (e) => {
     gameState.keysPressed[key] = true;
   }
 });
+
+// Lógica para quando as teclas são soltas
 window.addEventListener("keyup", (e) => {
   if (gameState && gameState.keysPressed) {
     gameState.keysPressed[e.key.toLowerCase()] = false;
   }
 });
 
+// Inicia o carregamento dos assets do jogo
 loadAssets();
