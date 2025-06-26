@@ -1,4 +1,4 @@
-import { gameState } from './gameState.js';
+import { gameState } from './gameState/gameState.js';
 import { phaseConfigs } from './config.js';
 
 export function drawHUD() {

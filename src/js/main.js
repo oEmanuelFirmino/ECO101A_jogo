@@ -1,11 +1,14 @@
 import { drawHUD, showEndScreen, showNarrativeScreen } from './ui.js';
 import { ctx, VIEWPORT_WIDTH, VIEWPORT_HEIGHT, MAP_WIDTH, MAP_HEIGHT, PLAYABLE_AREA_BORDER, assetSources, images, phaseConfigs } from './config.js';
-import { gameState, resetGameState } from './gameState.js';
-import { Player } from './entities.js';
-import { isColliding, spawnEnemy, spawnItem, setupPhase, checkPhaseCompletion, updateCamera } from './gameLogic.js';
+import { gameState, resetGameState } from './gameState/gameState.js';
+import { Player } from './entities/player.entity.js';
+import { isColliding } from './gameLogic/collision.js';
+import { spawnEnemy, spawnItem } from './gameLogic/spawn.js';
+import { setupPhase, checkPhaseCompletion } from './gameLogic/phase.js';
+import { updateCamera } from './gameLogic/camera.js';
 import { linkPhaseBackgrounds } from './config.js';
-let lastLavaDamageTime = 0;
 
+let lastLavaDamageTime = 0;
 
 const startMenu = document.getElementById("start-menu");
 const pauseMenu = document.getElementById("pause-menu");
@@ -23,17 +26,23 @@ const startFromControlsButton = document.getElementById("start-from-controls-but
 
 function applyPlayerDamage(damageAmount) {
   if (!gameState.player || gameState.isPlayerInvincible) return;
+
   gameState.player.takeDamage(damageAmount);
   gameState.isPlayerInvincible = true;
-  setTimeout(() => { gameState.isPlayerInvincible = false; }, 1000);
+
+  setTimeout(() => {
+    gameState.isPlayerInvincible = false;
+  }, 1000);
 }
 
 function update() {
   if (gameState.isGameOver || !gameState.player) return;
 
   const now = Date.now();
+
   gameState.player.update();
   updateCamera();
+
   const config = phaseConfigs[gameState.phase];
 
   if (config.objectiveType !== "defeat_boss" && config.spawnInterval) {
@@ -120,14 +129,17 @@ function update() {
 }
 function drawVisionLimiter() {
   if (!gameState.player) return;
+
   const player = gameState.player;
   const playerViewX = player.x - gameState.camera.x + player.width / 2;
   const playerViewY = player.y - gameState.camera.y + player.height / 2;
   const outerRadius = Math.max(VIEWPORT_WIDTH, VIEWPORT_HEIGHT) / 1.5;
   const gradient = ctx.createRadialGradient(playerViewX, playerViewY, 100, playerViewX, playerViewY, outerRadius);
+
   gradient.addColorStop(0, 'rgba(0, 0, 0, 0.4)');
   gradient.addColorStop(0.5, 'rgba(0, 0, 0, 0.85)');
   gradient.addColorStop(1, 'rgba(0, 0, 0, 1)');
+
   ctx.fillStyle = gradient;
   ctx.fillRect(0, 0, VIEWPORT_WIDTH, VIEWPORT_HEIGHT);
 }
@@ -135,20 +147,25 @@ function drawVisionLimiter() {
 function draw() {
   const config = phaseConfigs[gameState.phase];
   const bgImage = config?.bg;
+
   ctx.clearRect(0, 0, VIEWPORT_WIDTH, VIEWPORT_HEIGHT);
   ctx.save();
   ctx.translate(-gameState.camera.x, -gameState.camera.y);
+
   if (bgImage && bgImage.complete && bgImage.naturalWidth !== 0) {
     ctx.drawImage(bgImage, 0, 0, MAP_WIDTH, MAP_HEIGHT);
   }
   gameState.lavaPools.forEach((pool) => pool && pool.draw(ctx));
   if (gameState.portal) gameState.portal.draw(ctx);
   if (gameState.player) gameState.player.draw(ctx);
+
   gameState.items.forEach((item) => item && item.draw(ctx));
   gameState.enemies.forEach((enemy) => enemy && enemy.draw(ctx));
   gameState.projectiles.forEach((p) => p && p.draw(ctx));
   gameState.enemyProjectiles.forEach((p) => p && p.draw(ctx));
+
   ctx.restore();
+
   if (config.hasFog && gameState.player) {
     drawVisionLimiter();
   }
