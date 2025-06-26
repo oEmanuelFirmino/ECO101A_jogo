@@ -26,11 +26,52 @@ export function spawnEnemy(type = null) {
   }
 
   switch (enemyTypeKey) {
-    case "fast": gameState.enemies.push(new Enemy(x, y, 50, 50, 2.5, images.fastEnemy, 20, 50)); break;
-    case "golem": gameState.enemies.push(new DynamicEnemy(x, y, 75, 75, 1.5, { up: images.golem_costas, down: images.golem_frente, left: images.golem_esquerda, right: images.golem_direita }, 80, 75)); break;
-    case "tank": gameState.enemies.push(new DynamicEnemy(x, y, 100, 100, 0.75, { up: images.tank_costas, down: images.tank_frente, left: images.tank_esquerda, right: images.tank_direita }, 110, 15)); break;
-    case "vulcon": gameState.enemies.push(new DynamicEnemy(x, y, 100, 100, 0.75, { up: images.vulcon_costas, down: images.vulcon_frente, left: images.vulcon_esquerda, right: images.vulcon_direita }, 110, 15)); break;
-    case "larva": gameState.enemies.push(new DynamicEnemy(x, y, 65, 65, 1.5, { up: images.larva_costas, down: images.larva_frente, left: images.larva_esquerda, right: images.larva_direita }, 40, 25)); break;
+    case "fast":
+      gameState.enemies.push(
+        new Enemy(x, y, 50, 50, 2.5, images.fastEnemy, 20, 50)
+      );
+      break;
+    case "golem":
+      gameState.enemies.push(
+        new DynamicEnemy(x, y, 75, 75, 1.5, {
+          up: images.golem_costas,
+          down: images.golem_frente,
+          left: images.golem_esquerda,
+          right: images.golem_direita
+        }, 80, 75)
+      );
+      break;
+    case "tank":
+      gameState.enemies.push(
+        new DynamicEnemy(x, y, 100, 100, 0.75, {
+          up: images.tank_costas,
+          down: images.tank_frente,
+          left: images.tank_esquerda,
+          right: images.tank_direita
+        }, 110, 15)
+      );
+      break;
+    case "vulcon":
+      gameState.enemies.push(
+        new DynamicEnemy(x, y, 100, 100, 0.75,
+          {
+            up: images.vulcon_costas,
+            down: images.vulcon_frente,
+            left: images.vulcon_esquerda,
+            right: images.vulcon_direita
+          }, 110, 15)
+      );
+      break;
+    case "larva":
+      gameState.enemies.push(
+        new DynamicEnemy(x, y, 65, 65, 1.5, {
+          up: images.larva_costas,
+          down: images.larva_frente,
+          left: images.larva_esquerda,
+          right: images.larva_direita
+        }, 40, 25)
+      );
+      break;
     case "final_boss":
       const bossX = MAP_WIDTH / 2 - 60;
       const bossY = PLAYABLE_AREA_BORDER + 100;
@@ -40,9 +81,20 @@ export function spawnEnemy(type = null) {
         left: images.boss_esquerda,
         right: images.boss_direita,
       };
-      gameState.enemies.push(new FinalBoss(bossX, bossY, 180, 180, 1, bossSprites, 2500, 100));
+      gameState.enemies.push(
+        new FinalBoss(bossX, bossY, 180, 180, 1, bossSprites, 2500, 100)
+      );
       break;
-    default: gameState.enemies.push(new DynamicEnemy(x, y, 55, 55, 1.5, { up: images.normal_costas, down: images.normal_frente, left: images.normal_esquerda, right: images.normal_direita }, 40, 25)); break;
+    default:
+      gameState.enemies.push(
+        new DynamicEnemy(x, y, 55, 55, 1.5, {
+          up: images.normal_costas,
+          down: images.normal_frente,
+          left: images.normal_esquerda,
+          right: images.normal_direita
+        }, 40, 25)
+      );
+      break;
   }
 }
 
