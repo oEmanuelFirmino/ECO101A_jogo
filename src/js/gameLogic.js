@@ -48,7 +48,13 @@ export function spawnEnemy(type = null) {
         case "final_boss":
             const bossX = MAP_WIDTH / 2 - 60;
             const bossY = PLAYABLE_AREA_BORDER + 100;
-            gameState.enemies.push(new FinalBoss(bossX, bossY, 180, 180, 1, images.finalBoss, 2500, 100));
+            const bossSprites = {
+                up: images.boss_costas,
+                down: images.finalBoss, // usa a imagem original para 'frente'
+                left: images.boss_esquerda,
+                right: images.boss_direita,
+            };
+            gameState.enemies.push(new FinalBoss(bossX, bossY, 180, 180, 1, bossSprites, 2500, 100));
             break;
         default: gameState.enemies.push(new DynamicEnemy(x, y, 55, 55, 1.5, { up: images.normal_costas, down: images.normal_frente, left: images.normal_esquerda, right: images.normal_direita }, 40, 25)); break;
     }

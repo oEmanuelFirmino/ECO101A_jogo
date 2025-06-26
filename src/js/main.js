@@ -214,10 +214,23 @@ function returnToStartMenu() {
 
 function playMusicOnFirstInteraction() {
   const soundtrack = document.getElementById("game-soundtrack");
-  if (soundtrack && soundtrack.paused) {
-    soundtrack.play().catch(error => { console.error("Falha na reprodução da música:", error); });
+  if (soundtrack && soundtrack.src) {    
+    if (soundtrack.paused) {      
+      const playPromise = soundtrack.play();
+      if (playPromise !== undefined) {
+        playPromise.then(_ => {
+          console.log("Música tocando.");
+        })
+        .catch(error => {
+          console.error("Falha na reprodução da música:", error);
+        });
+      }
+    }
+  } else {
+    console.error("Elemento de áudio ou 'src' da trilha sonora não encontrado!");
   }
 }
+
 
 function loadAssets() {
   let loaded = 0;

@@ -87,7 +87,11 @@ export class Player extends Character {
     }
 
     if (vx !== 0 || vy !== 0) {
-
+      const shotSound = document.getElementById("player-shot-sfx");
+      if (shotSound) {
+        shotSound.currentTime = 0; // Reinicia o som para o início
+        shotSound.play();
+      }
       gameState.projectiles.push(
         new Projectile(projX, projY, hitboxWidth, hitboxHeight, visualWidth, visualHeight, images.projectile, vx, vy, direction)
       );
@@ -219,16 +223,28 @@ export class DynamicEnemy extends Enemy {
 }
 
 export class FinalBoss extends Enemy {
-  constructor(x, y, width, height, speed, sprite, health, damage) {
-    super(x, y, width, height, speed, sprite, health, damage);
+  constructor(x, y, width, height, speed, sprites, health, damage) {
+    super(x, y, width, height, speed, sprites.down, health, damage);
     this.maxHealth = health;
     this.state = 'idle';
     this.stateTimer = 0;
     this.lastAttackTime = Date.now();
+    this.sprites = sprites; // Guarda o objeto com todos os sprites
+    this.direction = 'down'; // Adiciona a propriedade de direção
   }
 
   update(player) {
     this.stateTimer -= 1000 / 60;
+
+    if (player) {
+      const dx = player.x - this.x;
+      const dy = player.y - this.y;
+      if (Math.abs(dy) > Math.abs(dx)) {
+        this.direction = dy > 0 ? 'down' : 'up';
+      } else {
+        this.direction = dx > 0 ? 'right' : 'left';
+      }
+    }
 
     if (this.stateTimer <= 0) {
       this.chooseNextState(player);
@@ -250,24 +266,19 @@ export class FinalBoss extends Enemy {
       this.state = 'idle';
       return;
     }
-
     const now = Date.now();
-
     if (now - this.lastAttackTime < 2000) {
       this.state = 'idle';
       return;
     }
-
     const healthPercent = this.health / this.maxHealth;
     const availableStates = ['charging', 'shooting'];
     if (healthPercent <= 0.5) {
       availableStates.push('summoning');
     }
-
     const nextState = availableStates[Math.floor(Math.random() * availableStates.length)];
     this.state = nextState;
     this.lastAttackTime = now;
-
     switch (nextState) {
       case 'charging':
         this.stateTimer = 1500;
@@ -288,13 +299,17 @@ export class FinalBoss extends Enemy {
 
   shootAtPlayer(player) {
     if (!player) return;
+    const shotSound = document.getElementById("boss-shot-sfx");
+    if (shotSound) {
+        shotSound.currentTime = 0; // Reinicia o som
+        shotSound.play();
+    }
     const projSpeed = 5;
     const numProjectiles = 5;
     const angleStep = Math.PI / 16;
     const dx = player.x - this.x;
     const dy = player.y - this.y;
     const centralAngle = Math.atan2(dy, dx);
-
     for (let i = 0; i < numProjectiles; i++) {
       const angle = centralAngle - (angleStep * (numProjectiles - 1) / 2) + (i * angleStep);
       const vx = Math.cos(angle) * projSpeed;
@@ -309,6 +324,18 @@ export class FinalBoss extends Enemy {
       const spawnY = this.y + (Math.random() - 0.5) * 200;
       gameState.enemies.push(new Enemy(spawnX, spawnY, 35, 35, 2.5, images.fastEnemy, 20, 50));
     }
+  }
+  draw(ctx) {
+    let currentSprite;
+    switch (this.direction) {
+      case 'up': currentSprite = this.sprites.up; break;
+      case 'down': currentSprite = this.sprites.down; break;
+      case 'left': currentSprite = this.sprites.left; break;
+      case 'right': currentSprite = this.sprites.right; break;
+      default: currentSprite = this.sprites.down;
+    }
+    const tempSprite = new Character(this.x, this.y, this.width, this.height, 0, currentSprite);
+    tempSprite.draw(ctx);
   }
 }
 
@@ -354,7 +381,7 @@ export class Projectile extends Character {
 
 export class EnemyProjectile extends Projectile {
   constructor(x, y, width, height, sprite, vx, vy, damage) {
-    super(x, y, width, height, sprite, vx, vy);
+    super(x, y, width, height, width, height, sprite, vx, vy, null);
     this.damage = damage;
   }
 }
