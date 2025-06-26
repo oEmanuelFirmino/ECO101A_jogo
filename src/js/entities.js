@@ -155,26 +155,29 @@ export class Player extends Character {
   }
 
   drawWeapon(ctx) {
+    if (gameState.isFireRateActive) {
+        return; 
+    }
     const pivotX = this.x + this.width / 2;
     const pivotY = this.y + this.height / 2;
     ctx.save();
     ctx.translate(pivotX, pivotY);
     let rotation = 0;
     switch (this.direction) {
-      case 'up': rotation = -Math.PI / 2; break;
-      case 'down': rotation = Math.PI / 2; break;
-      case 'left': ctx.scale(-1, 1); break;
-      case 'right': break;
+        case 'up': rotation = -Math.PI / 2; break;
+        case 'down': rotation = Math.PI / 2; break;
+        case 'left': ctx.scale(-1, 1); break;
+        case 'right': break;
     }
     ctx.rotate(rotation);
-    const weaponImage = gameState.isFireRateActive ? images.powerupWeapon : images.pistol;
+    const weaponImage = images.pistol; 
     if (weaponImage && weaponImage.complete && weaponImage.naturalWidth !== 0) {
-      const weaponWidth = 35;
-      const weaponHeight = 35;
-      ctx.drawImage(weaponImage, 10, -weaponHeight / 2, weaponWidth, weaponHeight);
+        const weaponWidth = 35;
+        const weaponHeight = 35;
+        ctx.drawImage(weaponImage, 10, -weaponHeight / 2, weaponWidth, weaponHeight);
     }
     ctx.restore();
-  }
+}
 }
 
 export class Enemy extends Character {
