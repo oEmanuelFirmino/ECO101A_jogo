@@ -2,6 +2,7 @@ import { gameState } from '../gameState/gameState.js';
 import { images } from '../config.js';
 import { Character } from "./character.entity.js";
 import { Enemy } from "./enemy.entity.js";
+import { EnemyProjectile } from "./projectile.entity.js";
 
 export class FinalBoss extends Enemy {
   constructor(x, y, width, height, speed, sprites, health, damage) {

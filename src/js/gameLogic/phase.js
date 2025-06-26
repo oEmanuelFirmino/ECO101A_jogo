@@ -3,6 +3,7 @@ import { phaseConfigs } from '../config.js';
 import { LavaPool } from '../entities/phaseAddons.entity.js';
 import { showNarrativeScreen, showEndScreen } from '../ui.js';
 import { narrativeTexts } from "./narratives.js";
+import { spawnEnemy } from './spawn.js';
 
 export function setupPhase(phaseIndex) {
   if (!phaseConfigs[phaseIndex]) return;

@@ -76,10 +76,7 @@ export function spawnEnemy(type = null) {
       const bossX = MAP_WIDTH / 2 - 60;
       const bossY = PLAYABLE_AREA_BORDER + 100;
       const bossSprites = {
-        up: images.boss_costas,
-        down: images.finalBoss,
-        left: images.boss_esquerda,
-        right: images.boss_direita,
+        up: images.boss_costas, down: images.finalBoss, left: images.boss_esquerda, right: images.boss_direita,
       };
       gameState.enemies.push(
         new FinalBoss(bossX, bossY, 180, 180, 1, bossSprites, 2500, 100)
