@@ -50,7 +50,7 @@ export function spawnEnemy(type = null) {
             const bossY = PLAYABLE_AREA_BORDER + 100;
             const bossSprites = {
                 up: images.boss_costas,
-                down: images.finalBoss, // usa a imagem original para 'frente'
+                down: images.finalBoss,
                 left: images.boss_esquerda,
                 right: images.boss_direita,
             };

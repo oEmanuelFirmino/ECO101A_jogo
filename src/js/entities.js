@@ -40,10 +40,10 @@ export class Player extends Character {
     this.x = Math.max(minX, Math.min(maxX, this.x));
     this.y = Math.max(minY, Math.min(maxY, this.y));
     if (gameState.canShoot) {
-      if (gameState.keysPressed["arrowup"]) this.shoot("up");
-      else if (gameState.keysPressed["arrowdown"]) this.shoot("down");
-      else if (gameState.keysPressed["arrowleft"]) this.shoot("left");
-      else if (gameState.keysPressed["arrowright"]) this.shoot("right");
+      if (gameState.keysPressed["i"]) this.shoot("up");
+      else if (gameState.keysPressed["k"]) this.shoot("down");
+      else if (gameState.keysPressed["j"]) this.shoot("left");
+      else if (gameState.keysPressed["l"]) this.shoot("right");
     }
     if (this.isShielded) {
       this.shieldTimer -= 1000 / 60;
@@ -89,7 +89,7 @@ export class Player extends Character {
     if (vx !== 0 || vy !== 0) {
       const shotSound = document.getElementById("player-shot-sfx");
       if (shotSound) {
-        shotSound.currentTime = 0; // Reinicia o som para o início
+        shotSound.currentTime = 0;
         shotSound.play();
       }
       gameState.projectiles.push(
@@ -156,7 +156,7 @@ export class Player extends Character {
 
   drawWeapon(ctx) {
     if (gameState.isFireRateActive) {
-        return; 
+      return;
     }
     const pivotX = this.x + this.width / 2;
     const pivotY = this.y + this.height / 2;
@@ -164,20 +164,20 @@ export class Player extends Character {
     ctx.translate(pivotX, pivotY);
     let rotation = 0;
     switch (this.direction) {
-        case 'up': rotation = -Math.PI / 2; break;
-        case 'down': rotation = Math.PI / 2; break;
-        case 'left': ctx.scale(-1, 1); break;
-        case 'right': break;
+      case 'up': rotation = -Math.PI / 2; break;
+      case 'down': rotation = Math.PI / 2; break;
+      case 'left': ctx.scale(-1, 1); break;
+      case 'right': break;
     }
     ctx.rotate(rotation);
-    const weaponImage = images.pistol; 
+    const weaponImage = images.pistol;
     if (weaponImage && weaponImage.complete && weaponImage.naturalWidth !== 0) {
-        const weaponWidth = 35;
-        const weaponHeight = 35;
-        ctx.drawImage(weaponImage, 10, -weaponHeight / 2, weaponWidth, weaponHeight);
+      const weaponWidth = 35;
+      const weaponHeight = 35;
+      ctx.drawImage(weaponImage, 10, -weaponHeight / 2, weaponWidth, weaponHeight);
     }
     ctx.restore();
-}
+  }
 }
 
 export class Enemy extends Character {
@@ -232,8 +232,8 @@ export class FinalBoss extends Enemy {
     this.state = 'idle';
     this.stateTimer = 0;
     this.lastAttackTime = Date.now();
-    this.sprites = sprites; // Guarda o objeto com todos os sprites
-    this.direction = 'down'; // Adiciona a propriedade de direção
+    this.sprites = sprites;
+    this.direction = 'down';
   }
 
   update(player) {
@@ -304,8 +304,8 @@ export class FinalBoss extends Enemy {
     if (!player) return;
     const shotSound = document.getElementById("boss-shot-sfx");
     if (shotSound) {
-        shotSound.currentTime = 0; // Reinicia o som
-        shotSound.play();
+      shotSound.currentTime = 0;
+      shotSound.play();
     }
     const projSpeed = 5;
     const numProjectiles = 5;
