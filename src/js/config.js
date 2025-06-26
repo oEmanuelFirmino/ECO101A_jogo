@@ -17,8 +17,6 @@ export const MAP_HEIGHT = 1000;
 export const PLAYABLE_AREA_BORDER = 100;
 
 export const assetSources = {
-  pistol: './images/pistol.png',
-  gun: "./images/gun.png",
   projectile: "./images/bullet.png",
   enemyProjectile: "./images/enemy_projectile.png",
   enemy: "./images/normal_enemy.png",
@@ -57,10 +55,10 @@ export const assetSources = {
   golem_costas: "./images/golem_costas.png",
   golem_direita: "./images/golem_direita.png",
   golem_esquerda: "./images/golem_esquerda.png",
-  player_frente: "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 40 60'%3E%3Crect x='10' y='20' width='20' height='30' fill='%233498db'/%3E%3Crect x='12' y='50' width='6' height='10' fill='%232c3e50'/%3E%3Crect x='22' y='50' width='6' height='10' fill='%232c3e50'/%3E%3Crect x='15' y='10' width='10' height='10' fill='%23f1c40f'/%3E%3C/svg%3E",
-  player_costas: "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 40 60'%3E%3Crect x='10' y='20' width='20' height='30' fill='%233498db'/%3E%3Crect x='12' y='50' width='6' height='10' fill='%232c3e50'/%3E%3Crect x='22' y='50' width='6' height='10' fill='%232c3e50'/%3E%3Crect x='15' y='10' width='10' height='10' fill='%23f1c40f'/%3E%3Crect x='10' y='10' width='20' height='15' fill='%233498db'/%3E%3C/svg%3E",
-  player_direita: "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 40 60'%3E%3Crect x='10' y='20' width='20' height='30' fill='%233498db'/%3E%3Crect x='13' y='50' width='14' height='10' fill='%232c3e50'/%3E%3Crect x='15' y='10' width='10' height='10' fill='%23f1c40f'/%3E%3Crect x='25' y='25' width='10' height='6' fill='%232980b9'/%3E%3C/svg%3E",
-  player_esquerda: "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 40 60'%3E%3Crect x='10' y='20' width='20' height='30' fill='%233498db'/%3E%3Crect x='13' y='50' width='14' height='10' fill='%232c3e50'/%3E%3Crect x='15' y='10' width='10' height='10' fill='%23f1c40f'/%3E%3Crect x='5' y='25' width='10' height='6' fill='%232980b9'/%3E%3C/svg%3E",
+  player_frente: "./images/player_frente.png",
+  player_costas: "./images/player_costas.png",
+  player_direita: "./images/player_direita.png",
+  player_esquerda: "./images/player_esquerda.png",
 };
 
 export const images = {};
