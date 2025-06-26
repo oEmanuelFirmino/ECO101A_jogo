@@ -169,6 +169,8 @@ Eduardo Luiz - [🔗Ir ao Perfil](https://github.com/Dudruu)
 
 Enrique Mantovani - [🔗Ir ao Perfil](https://github.com/enriquemantovani)
 
+Carlos Henrique
+
 
 📝 Licença
 Este projeto está licenciado sob a Licença MIT. Veja o arquivo LICENSE para mais detalhes.
