@@ -34,19 +34,19 @@ Opção 2: Localmente pelo Repositório
 Clone o Repositório:
 
 ```bash
-git clone https://github.com/oemanuelfirmino/ecom00_jogo.git
+git clone https://github.com/oemanuelfirmino/ECO101A_jogo.git
 ```
 
 Navegue até o Diretório do Projeto:
 
 ```bash
-cd ecom00_jogo
+cd ECO101A_jogo
 ```
 
 Abra o Jogo:
 Simplesmente abra o arquivo index.html em seu navegador web preferido. Não é necessário nenhum servidor web ou dependências adicionais!
 
-`file:///caminho/para/o/seu/repositorio/ecom00_jogo/index.html`
+`file:///caminho/para/o/seu/repositorio/ECO101A_jogo/index.html`
 
 _**Dica: Para uma melhor experiência, use navegadores modernos como Google Chrome, Mozilla Firefox ou Microsoft Edge.**_
 
