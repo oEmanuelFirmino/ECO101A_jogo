@@ -1,7 +1,7 @@
-# 🚀 Projeto de Jogo ECOM00: Aventura na Masmorra 🚀
+# 🚀 Projeto de Jogo ECO101A: Aventura na Masmorra 🚀
 
 ## 🌌 Bem-vindos à Aventura!
-Este projeto é um jogo desenvolvido como parte da disciplina de ECOM00 - Introdução à Engenharia da Computação. Nosso objetivo foi aplicar conceitos fundamentais de lógica de programação, estruturas de dados e organização de código em um ambiente prático e divertido.
+Este projeto é um jogo desenvolvido como parte da disciplina de ECO101A - Introdução à Engenharia da Computação. Nosso objetivo foi aplicar conceitos fundamentais de lógica de programação, estruturas de dados e organização de código em um ambiente prático e divertido.
 
 Prepare-se para uma experiência imersiva onde suas habilidades serão testadas!
 
@@ -118,7 +118,7 @@ Este projeto foi construído utilizando as seguintes tecnologias web:
     - `src/js/gameState/gameState.js`
 
 📂 Estrutura do Projeto
-ecom00_jogo/  
+ECO101A_jogo/  
 ├── .gitignore  
 ├── images/  
 │   └── hud-background_files/  
